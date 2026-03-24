@@ -1,5 +1,5 @@
 ---
-name: install-global
+name: install-status
 description: Configure ~/.claude/settings.json to use the persistent statusLine launcher. Run after plugin install or OS reinstall.
 user-invocable: true
 allowed-tools: "Read, Write, Edit, Bash"
@@ -33,6 +33,7 @@ SETTINGS    = "$env:USERPROFILE/.claude/settings.json"
 ```
 
 On macOS/Linux:
+
 ```
 PLUGIN_DATA = $CLAUDE_PLUGIN_DATA
 LAUNCHER    = "$PLUGIN_DATA/bin/status-line.ps1"
@@ -87,18 +88,19 @@ Get-Content $SETTINGS | ConvertFrom-Json | Select-Object -ExpandProperty statusL
 ```
 
 Expected output:
+
 ```
 command : C:\Users\<user>\AppData\...\claude-status\bin\status-line.ps1
 ```
 
 ## Error conditions
 
-| Condition | Action |
-|---|---|
-| `CLAUDE_PLUGIN_DATA` not set | Print error and exit |
-| Launcher file not yet present | Warn user to run SessionStart hook (or restart Claude Code) first |
-| `~/.claude/` directory does not exist | Create it before writing settings |
-| JSON parse error in existing settings | Back up the file, then overwrite with minimal valid JSON |
+| Condition                             | Action                                                            |
+| ------------------------------------- | ----------------------------------------------------------------- |
+| `CLAUDE_PLUGIN_DATA` not set          | Print error and exit                                              |
+| Launcher file not yet present         | Warn user to run SessionStart hook (or restart Claude Code) first |
+| `~/.claude/` directory does not exist | Create it before writing settings                                 |
+| JSON parse error in existing settings | Back up the file, then overwrite with minimal valid JSON          |
 
 ## Notes
 

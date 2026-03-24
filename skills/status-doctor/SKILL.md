@@ -1,5 +1,5 @@
 ---
-name: doctor
+name: status-doctor
 description: Check all external dependencies, authentication status, cache freshness, and configuration required by the claude-status plugin. Use when status line shows errors or after installation.
 user-invocable: true
 allowed-tools: "Read, Bash"
@@ -16,19 +16,19 @@ Check all external dependencies and configuration required by the claude-status 
 
 ## What this skill checks
 
-| Check | Tool / Path | Required for |
-|---|---|---|
-| Node.js | `node --version` | Runtime renderer, all collectors |
-| npm | `npm --version` | Runtime build / install |
-| GitHub CLI auth | `gh auth status` | github collector |
-| Atlassian CLI auth | `acli jira auth status` | jira collector |
-| Google OAuth client config | `$CLAUDE_PLUGIN_DATA/google/client_secret.json` | gmail, tasks collectors |
-| Google token cache | `$CLAUDE_PLUGIN_DATA/google/tokens.json` | gmail, tasks collectors |
-| Launcher file | `$CLAUDE_PLUGIN_DATA/bin/status-line.ps1` | statusLine.command |
-| Runtime dist | `$CLAUDE_PLUGIN_DATA/runtime/dist/render.js` | statusLine execution |
-| settings.json pointer | `~/.claude/settings.json` → `statusLine.command` | status line rendering |
-| Cache freshness (each service) | `$CLAUDE_PLUGIN_DATA/cache/<service>.json` | accurate status line |
-| Last error per service | `errorKind` + `detail` in each cache file | diagnosing `!` entries |
+| Check                          | Tool / Path                                      | Required for                     |
+| ------------------------------ | ------------------------------------------------ | -------------------------------- |
+| Node.js                        | `node --version`                                 | Runtime renderer, all collectors |
+| npm                            | `npm --version`                                  | Runtime build / install          |
+| GitHub CLI auth                | `gh auth status`                                 | github collector                 |
+| Atlassian CLI auth             | `acli jira auth status`                          | jira collector                   |
+| Google OAuth client config     | `$CLAUDE_PLUGIN_DATA/google/client_secret.json`  | gmail, tasks collectors          |
+| Google token cache             | `$CLAUDE_PLUGIN_DATA/google/tokens.json`         | gmail, tasks collectors          |
+| Launcher file                  | `$CLAUDE_PLUGIN_DATA/bin/status-line.ps1`        | statusLine.command               |
+| Runtime dist                   | `$CLAUDE_PLUGIN_DATA/runtime/dist/render.js`     | statusLine execution             |
+| settings.json pointer          | `~/.claude/settings.json` → `statusLine.command` | status line rendering            |
+| Cache freshness (each service) | `$CLAUDE_PLUGIN_DATA/cache/<service>.json`       | accurate status line             |
+| Last error per service         | `errorKind` + `detail` in each cache file        | diagnosing `!` entries           |
 
 ---
 
@@ -134,9 +134,9 @@ fresh = age < ttlMs
 - PASS: `fresh = true`
 - WARN: `fresh = false` — cache is stale; a background refresh will fire on the next render
 - FAIL (file missing): collector has never run; trigger manually:
-  ```bash
-  node "$CLAUDE_PLUGIN_DATA/runtime/dist/collect.js" --service <service> --force
-  ```
+    ```bash
+    node "$CLAUDE_PLUGIN_DATA/runtime/dist/collect.js" --service <service> --force
+    ```
 
 ### 11. Check last error per service
 
@@ -150,16 +150,16 @@ For each service cache file where `status = "error"`, display:
 
 Fix suggestions by `errorKind`:
 
-| `errorKind` | Service | Fix |
-|---|---|---|
-| `auth` | github | `gh auth login` |
-| `auth` | jira | `acli jira auth login --web` |
-| `auth` | gmail / tasks | Run `/claude-status:setup-google` |
-| `dependency` | github | Install `gh` from https://cli.github.com |
-| `dependency` | jira | Install `acli` from https://acli.atlassian.com |
-| `rate_limit` | any | Wait a few minutes, then retry |
-| `transient` | any | `node "$CLAUDE_PLUGIN_DATA/runtime/dist/collect.js" --service <service> --force` |
-| `unknown` | any | See `detail` field for raw error; check internet connectivity |
+| `errorKind`  | Service       | Fix                                                                              |
+| ------------ | ------------- | -------------------------------------------------------------------------------- |
+| `auth`       | github        | `gh auth login`                                                                  |
+| `auth`       | jira          | `acli jira auth login --web`                                                     |
+| `auth`       | gmail / tasks | Run `/claude-status:setup-google`                                                |
+| `dependency` | github        | Install `gh` from https://cli.github.com                                         |
+| `dependency` | jira          | Install `acli` from https://acli.atlassian.com                                   |
+| `rate_limit` | any           | Wait a few minutes, then retry                                                   |
+| `transient`  | any           | `node "$CLAUDE_PLUGIN_DATA/runtime/dist/collect.js" --service <service> --force` |
+| `unknown`    | any           | See `detail` field for raw error; check internet connectivity                    |
 
 ---
 
