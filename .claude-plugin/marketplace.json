@@ -1,0 +1,20 @@
+{
+    "name": "claude-code-status",
+    "owner": {
+        "name": "seojaewan"
+    },
+    "metadata": {
+        "description": "Claude Code statusline plugin marketplace",
+        "version": "0.1.0"
+    },
+    "plugins": [
+        {
+            "name": "claude-code-status",
+            "source": ".",
+            "description": "Displays counts from external services (week/session usage, gmail, tasks, jira, github) in Claude Code's status line.",
+            "version": "0.1.0",
+            "keywords": ["statusline", "gmail", "tasks", "jira", "github", "productivity"],
+            "category": "productivity"
+        }
+    ]
+}

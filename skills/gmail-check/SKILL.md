@@ -1,4 +1,9 @@
-# /claude-status:gmail-check
+---
+name: gmail-check
+description: Show cached Gmail unread details, diagnose errors, and optionally force a fresh fetch. Use when status line shows Gmail count or error.
+user-invocable: true
+allowed-tools: "Read, Bash"
+---
 
 Show cached Gmail unread details and optionally force a fresh fetch.
 

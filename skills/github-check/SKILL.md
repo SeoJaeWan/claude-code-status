@@ -1,4 +1,9 @@
-# /claude-status:github-check
+---
+name: github-check
+description: Show cached GitHub PR notification details, diagnose errors, guide authentication, and optionally force a fresh fetch. Use when status line shows github count or error.
+user-invocable: true
+allowed-tools: "Read, Bash"
+---
 
 Show cached GitHub PR notification details and optionally force a fresh fetch.
 

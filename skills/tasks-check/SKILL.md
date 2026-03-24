@@ -1,4 +1,9 @@
-# /claude-status:tasks-check
+---
+name: tasks-check
+description: Show cached Google Tasks incomplete count, diagnose errors, and optionally force a fresh fetch. Use when status line shows tasks count or error.
+user-invocable: true
+allowed-tools: "Read, Bash"
+---
 
 Show cached Google Tasks details and optionally force a fresh fetch.
 

@@ -1,4 +1,9 @@
-# /claude-status:install-global
+---
+name: install-global
+description: Configure ~/.claude/settings.json to use the persistent statusLine launcher. Run after plugin install or OS reinstall.
+user-invocable: true
+allowed-tools: "Read, Write, Edit, Bash"
+---
 
 Configure `~/.claude/settings.json` to use the persistent statusLine launcher from `${CLAUDE_PLUGIN_DATA}`.
 

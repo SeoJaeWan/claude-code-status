@@ -1,4 +1,9 @@
-# /claude-status:setup-google
+---
+name: setup-google
+description: Complete the one-time Google OAuth 2.0 Desktop setup for Gmail and Tasks access. Use for first-time setup or when Google tokens need to be re-obtained.
+user-invocable: true
+allowed-tools: "Read, Bash"
+---
 
 Complete the one-time Google OAuth 2.0 Desktop setup for Gmail and Tasks access.
 

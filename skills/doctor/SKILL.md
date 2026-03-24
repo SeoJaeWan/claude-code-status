@@ -1,4 +1,9 @@
-# /claude-status:doctor
+---
+name: doctor
+description: Check all external dependencies, authentication status, cache freshness, and configuration required by the claude-status plugin. Use when status line shows errors or after installation.
+user-invocable: true
+allowed-tools: "Read, Bash"
+---
 
 Check all external dependencies and configuration required by the claude-status plugin.
 

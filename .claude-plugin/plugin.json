@@ -1,21 +1,22 @@
 {
-    "id": "claude-code-status",
-    "name": "Claude Code Statusline",
-    "version": "0.1.0",
-    "description": "Displays counts from external services (week/session usage, gmail, tasks, jira, github) in Claude Code's status line.",
-    "hooks": {
-        "SessionStart": "hooks/session-start.sh"
-    },
-    "skills": [
-        {
-            "name": "install-global",
-            "path": "skills/install-global.md",
-            "description": "Configure ~/.claude/settings.json to use the stable statusLine launcher"
-        },
-        {
-            "name": "doctor",
-            "path": "skills/doctor.md",
-            "description": "Check external dependencies: node, gh, acli, Google OAuth config"
-        }
+  "name": "claude-code-status",
+  "version": "0.1.0",
+  "description": "Displays counts from external services (week/session usage, gmail, tasks, jira, github) in Claude Code's status line.",
+  "author": {
+    "name": "USER"
+  },
+  "keywords": ["statusline", "gmail", "tasks", "jira", "github", "productivity"],
+  "skills": "./skills/",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh"
+          }
+        ]
+      }
     ]
+  }
 }

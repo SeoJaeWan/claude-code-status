@@ -1,4 +1,9 @@
-# /claude-status:jira-check
+---
+name: jira-check
+description: Show cached Jira open issue count, diagnose errors, guide authentication, and optionally force a fresh fetch. Use when status line shows jira count or error.
+user-invocable: true
+allowed-tools: "Read, Bash"
+---
 
 Show cached Jira issue details and optionally force a fresh fetch.
 
