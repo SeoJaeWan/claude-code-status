@@ -33,8 +33,9 @@
 #
 # EXIT CODES
 # ==========
-#   0  - success, stdout contains status line
-#   1+ - error; Claude Code will fall back to empty/default status line
+#   0  - ALWAYS. On any error a fallback string is written to stdout so that
+#        Claude Code never receives an empty status line.  render.js mirrors
+#        this contract: it catches all exceptions and exits 0.
 #
 # FALLBACK BEHAVIOR
 # =================
