@@ -7,7 +7,9 @@
     "build": "tsc --project tsconfig.json",
     "build:watch": "tsc --project tsconfig.json --watch",
     "start": "node dist/render.js",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -15,6 +17,7 @@
   "devDependencies": {
     "@types/node": "^20.19.37",
     "rimraf": "^5.0.5",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "vitest": "^4.1.1"
   }
 }
