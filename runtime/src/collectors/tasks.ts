@@ -4,19 +4,18 @@
  * Google Tasks needsAction count collector.
  *
  * Strategy:
- *  - Lists all task lists via GET /tasks/v1/users/@me/lists.
- *  - For each task list, fetches tasks with showCompleted=false.
+ *  - Uses the Google Workspace CLI (`gws`) to list task lists and tasks.
+ *  - Lists all task lists via: gws tasks tasklists list
+ *  - For each list, fetches tasks: gws tasks tasks list --params '{"tasklist":"<id>","showCompleted":false,"showHidden":false}'
  *  - Counts only tasks with status === 'needsAction'.
- *  - Uses the Google OAuth2 token from google-auth.ts.
  *  - Writes result to ${CLAUDE_PLUGIN_DATA}/cache/tasks.json.
  *
  * TTL: 5 minutes.
  */
 
-import * as https from 'https';
+import { execFile } from 'child_process';
 import type { CollectorResult, ErrorKind } from '../types';
 import { writeCacheFile } from '../coordinator';
-import { getValidAccessToken } from '../google-auth';
 
 const SERVICE = 'tasks';
 const TTL_MS = 5 * 60_000; // 5 minutes
@@ -56,15 +55,15 @@ interface TasksResponse {
 // Error classification
 // ---------------------------------------------------------------------------
 
-function classifyError(err: unknown): { errorKind: ErrorKind; detail: string } {
+function classifyError(err: unknown, exitCode?: number): { errorKind: ErrorKind; detail: string } {
   const msg = err instanceof Error ? err.message : String(err);
 
-  if (/client_secret|tokens|OAuth|refresh_token|token.*not found/i.test(msg)) {
-    return { errorKind: 'auth', detail: `Google auth not configured: ${msg}` };
+  if (exitCode === 2 || /auth|credentials|login|401|403|unauthorized|forbidden/i.test(msg)) {
+    return { errorKind: 'auth', detail: `Google Tasks auth error: ${msg}` };
   }
 
-  if (/401|403|invalid_grant|invalid_token|unauthorized|forbidden/i.test(msg)) {
-    return { errorKind: 'auth', detail: `Google Tasks authentication failed: ${msg}` };
+  if (/not found|ENOENT|gws/i.test(msg) && /command|spawn/i.test(msg)) {
+    return { errorKind: 'dependency', detail: 'gws CLI not found. Install: npm install -g @googleworkspace/cli' };
   }
 
   if (/429|rateLimitExceeded|rate.?limit/i.test(msg)) {
@@ -79,44 +78,15 @@ function classifyError(err: unknown): { errorKind: ErrorKind; detail: string } {
 }
 
 // ---------------------------------------------------------------------------
-// HTTP helper
+// Run gws command
 // ---------------------------------------------------------------------------
 
-function httpsGet(url: string, accessToken: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const urlObj = new URL(url);
-    const options = {
-      hostname: urlObj.hostname,
-      path: urlObj.pathname + urlObj.search,
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: 'application/json',
-      },
-    };
-
-    const req = https.request(options, (res) => {
-      let data = '';
-      res.on('data', (chunk) => { data += chunk; });
-      res.on('end', () => {
-        if (res.statusCode === 401 || res.statusCode === 403) {
-          reject(new Error(`HTTP ${res.statusCode}: unauthorized or forbidden`));
-        } else if (res.statusCode === 429) {
-          reject(new Error(`HTTP 429: rate limit exceeded`));
-        } else if (res.statusCode && res.statusCode >= 400) {
-          reject(new Error(`HTTP ${res.statusCode}: ${data.slice(0, 200)}`));
-        } else {
-          resolve(data);
-        }
-      });
+function runGws(args: string[]): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  return new Promise((resolve) => {
+    execFile('gws', args, { timeout: 15_000 }, (err, stdout, stderr) => {
+      const exitCode = err && 'code' in err ? (err as { code: number }).code : 0;
+      resolve({ stdout: stdout ?? '', stderr: stderr ?? '', exitCode });
     });
-
-    req.on('error', reject);
-    req.setTimeout(15_000, () => {
-      req.destroy(new Error('Request timeout'));
-    });
-
-    req.end();
   });
 }
 
@@ -124,15 +94,23 @@ function httpsGet(url: string, accessToken: string): Promise<string> {
 // Fetch all task lists
 // ---------------------------------------------------------------------------
 
-async function fetchTaskLists(accessToken: string): Promise<TaskList[]> {
-  const url = 'https://tasks.googleapis.com/tasks/v1/users/@me/lists?maxResults=100';
-  const raw = await httpsGet(url, accessToken);
+async function fetchTaskLists(): Promise<TaskList[]> {
+  const { stdout, stderr, exitCode } = await runGws([
+    'tasks', 'tasklists', 'list',
+  ]);
+
+  if (exitCode !== 0) {
+    throw Object.assign(
+      new Error(stderr.trim() || stdout.trim() || `gws exited with code ${exitCode}`),
+      { exitCode },
+    );
+  }
 
   let parsed: TaskListsResponse;
   try {
-    parsed = JSON.parse(raw) as TaskListsResponse;
+    parsed = JSON.parse(stdout) as TaskListsResponse;
   } catch {
-    throw new Error(`Failed to parse task lists response: ${raw.slice(0, 200)}`);
+    throw new Error(`Failed to parse task lists response: ${stdout.slice(0, 200)}`);
   }
 
   return parsed.items ?? [];
@@ -142,24 +120,34 @@ async function fetchTaskLists(accessToken: string): Promise<TaskList[]> {
 // Fetch needsAction tasks for a single task list
 // ---------------------------------------------------------------------------
 
-async function fetchNeedsActionCount(accessToken: string, taskListId: string): Promise<number> {
-  // showCompleted=false excludes completed tasks from the response
-  // showHidden=false excludes hidden/deleted tasks
-  const url =
-    `https://tasks.googleapis.com/tasks/v1/lists/${encodeURIComponent(taskListId)}/tasks` +
-    `?showCompleted=false&showHidden=false&maxResults=100`;
+async function fetchNeedsActionCount(taskListId: string): Promise<number> {
+  const params = JSON.stringify({
+    tasklist: taskListId,
+    showCompleted: false,
+    showHidden: false,
+    maxResults: 100,
+  });
 
-  const raw = await httpsGet(url, accessToken);
+  const { stdout, stderr, exitCode } = await runGws([
+    'tasks', 'tasks', 'list',
+    '--params', params,
+  ]);
+
+  if (exitCode !== 0) {
+    throw Object.assign(
+      new Error(stderr.trim() || stdout.trim() || `gws exited with code ${exitCode}`),
+      { exitCode },
+    );
+  }
 
   let parsed: TasksResponse;
   try {
-    parsed = JSON.parse(raw) as TasksResponse;
+    parsed = JSON.parse(stdout) as TasksResponse;
   } catch {
-    throw new Error(`Failed to parse tasks response for list ${taskListId}: ${raw.slice(0, 200)}`);
+    throw new Error(`Failed to parse tasks response for list ${taskListId}: ${stdout.slice(0, 200)}`);
   }
 
   const items = parsed.items ?? [];
-  // Double-check status field (API may still return completed items on some lists)
   return items.filter((t) => t.status === 'needsAction').length;
 }
 
@@ -173,16 +161,11 @@ export async function collect(): Promise<void> {
   let result: CollectorResult;
 
   try {
-    // 1. Get a valid access token
-    const accessToken = await getValidAccessToken();
+    const taskLists = await fetchTaskLists();
 
-    // 2. Fetch all task lists
-    const taskLists = await fetchTaskLists(accessToken);
-
-    // 3. Fetch needsAction count for each list and sum them up
     let totalCount = 0;
     for (const list of taskLists) {
-      const count = await fetchNeedsActionCount(accessToken, list.id);
+      const count = await fetchNeedsActionCount(list.id);
       totalCount += count;
     }
 
@@ -196,7 +179,10 @@ export async function collect(): Promise<void> {
       source: SERVICE,
     };
   } catch (err) {
-    const { errorKind, detail } = classifyError(err);
+    const exitCode = err && typeof err === 'object' && 'exitCode' in err
+      ? (err as { exitCode: number }).exitCode
+      : undefined;
+    const { errorKind, detail } = classifyError(err, exitCode);
     result = {
       value: null,
       status: 'error',

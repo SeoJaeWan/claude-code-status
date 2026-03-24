@@ -56,7 +56,7 @@ Read `errorKind` and `detail` from the cache and explain what went wrong:
 
 | `errorKind` | Likely cause | Recommended fix |
 |---|---|---|
-| `auth` | Google OAuth token missing or expired | Run `/claude-status:setup-google` to re-authorize |
+| `auth` | gws not authenticated | Run `gws auth login` |
 | `dependency` | Required dependency missing | Check Node.js and internet access |
 | `rate_limit` | Tasks API quota exceeded | Wait a few minutes, then retry |
 | `transient` | Temporary network error | Retry with `--force` |
@@ -93,9 +93,9 @@ Google Tasks incomplete: 3   (last updated: 2026-03-24T10:15:00Z)
 ```
 Tasks status: ERROR
 Error kind:   auth
-Detail:       Google tokens not found at /home/user/.claude/plugins/claude-status/google/tokens.json.
+Detail:       Google Tasks auth error: Access denied. No credentials provided. Run `gws auth login`.
 
-Fix: Run /claude-status:setup-google to complete the Google OAuth flow.
+Fix: Run `gws auth login` to authenticate.
 ```
 
 ## Notes

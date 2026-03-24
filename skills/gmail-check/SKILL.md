@@ -56,7 +56,7 @@ Read `errorKind` and `detail` from the cache and explain what went wrong:
 
 | `errorKind` | Likely cause | Recommended fix |
 |---|---|---|
-| `auth` | Google OAuth token missing or expired | Run `/claude-status:setup-google` to re-authorize |
+| `auth` | gws not authenticated | Run `gws auth login` |
 | `dependency` | Required dependency missing | Check that Node.js and internet access are available |
 | `rate_limit` | Gmail API quota exceeded | Wait a few minutes, then retry |
 | `transient` | Temporary network error | Retry with `--force` |
@@ -95,9 +95,9 @@ Gmail unread: 7   (last updated: 2026-03-24T10:15:00Z)
 ```
 Gmail status: ERROR
 Error kind:   auth
-Detail:       Google tokens not found at /home/user/.claude/plugins/claude-status/google/tokens.json.
+Detail:       Gmail auth error: Access denied. No credentials provided. Run `gws auth login`.
 
-Fix: Run /claude-status:setup-google to complete the Google OAuth flow.
+Fix: Run `gws auth login` to authenticate.
 ```
 
 ## Notes

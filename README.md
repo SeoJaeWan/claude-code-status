@@ -44,6 +44,41 @@ Each service shows one of:
 
 ---
 
+## Prerequisites
+
+The following CLIs are required for the corresponding services:
+
+| Service | CLI | Install |
+|---|---|---|
+| GitHub | [GitHub CLI](https://cli.github.com) v2.0+ | `winget install GitHub.cli` or [download](https://cli.github.com) |
+| Jira | [Atlassian CLI](https://developer.atlassian.com/cloud/acli/guides/install-acli/) | See below |
+| Gmail / Tasks | [Google Workspace CLI](https://github.com/googleworkspace/cli) | `npm install -g @googleworkspace/cli` |
+
+#### Atlassian CLI (acli) installation
+
+Download the binary for your platform:
+
+**Windows (PowerShell):**
+
+```powershell
+# x86-64
+Invoke-WebRequest -Uri https://acli.atlassian.com/windows/latest/acli_windows_amd64/acli.exe -OutFile acli.exe
+
+# ARM64
+Invoke-WebRequest -Uri https://acli.atlassian.com/windows/latest/acli_windows_arm64/acli.exe -OutFile acli.exe
+```
+
+After downloading, move `acli.exe` to a directory in your `PATH` and verify:
+
+```bash
+acli --help
+```
+
+> **Note:** npm의 `acli` 패키지는 Atlassian CLI가 아닙니다. 반드시 위 공식
+> 바이너리를 사용하세요.
+
+---
+
 ## Installation
 
 ### 1. Install the plugin
@@ -57,7 +92,7 @@ claude plugin install claude-status
 After installation, run:
 
 ```
-/claude-status:install-global
+/claude-status:install-status
 ```
 
 This sets `statusLine.command` in `~/.claude/settings.json` to point to the
@@ -76,38 +111,23 @@ Each external service requires a one-time authentication step:
 gh auth login
 ```
 
-Requires the [GitHub CLI](https://cli.github.com) (v2.0+).
-
 #### Jira
 
 ```bash
 acli jira auth login --web
 ```
 
-Requires the [Atlassian CLI](https://acli.atlassian.com).
+브라우저가 열리면 Atlassian 사이트를 선택하고 권한을 승인합니다.
 
-#### Gmail and Google Tasks (Google OAuth)
+#### Gmail and Google Tasks
 
-Follow the guided setup:
-
+```bash
+npm install -g @googleworkspace/cli
+gws auth setup    # creates Cloud project & enables APIs (needs gcloud CLI)
+gws auth login    # browser-based OAuth consent
 ```
-/claude-status:setup-google
-```
 
-This walks you through creating a Google Cloud project, enabling the Gmail and
-Tasks APIs, downloading Desktop OAuth credentials, and completing the browser-
-based consent flow.
-
-Quick summary:
-
-1. Create a Google Cloud project at https://console.cloud.google.com/
-2. Enable **Gmail API** and **Google Tasks API**.
-3. Create a **Desktop app** OAuth client and download `client_secret.json`.
-4. Save it to `$CLAUDE_PLUGIN_DATA/google/client_secret.json`.
-5. Run the auth flow:
-   ```bash
-   node "$CLAUDE_PLUGIN_DATA/runtime/dist/google-auth-flow.js"
-   ```
+For manual setup without `gcloud`, see the [gws README](https://github.com/googleworkspace/cli#manual-oauth-setup).
 
 ---
 
@@ -115,13 +135,12 @@ Quick summary:
 
 | Command | Description |
 |---|---|
-| `/claude-status:install-global` | Wire the status line launcher into `~/.claude/settings.json` |
-| `/claude-status:setup-google` | Complete Google OAuth setup for Gmail and Tasks |
+| `/claude-status:install-status` | Wire the status line launcher into `~/.claude/settings.json` |
 | `/claude-status:gmail-check` | Show Gmail unread details; diagnose errors; force refresh |
 | `/claude-status:tasks-check` | Show Google Tasks details; diagnose errors; force refresh |
 | `/claude-status:jira-check` | Show Jira issue details; diagnose errors; force refresh |
 | `/claude-status:github-check` | Show GitHub PR notification details; diagnose errors; force refresh |
-| `/claude-status:doctor` | Comprehensive health check with actionable fix suggestions |
+| `/claude-status:status-doctor` | Comprehensive health check with actionable fix suggestions |
 
 ---
 
@@ -168,7 +187,7 @@ Cache TTLs:
 ### Run the doctor
 
 ```
-/claude-status:doctor
+/claude-status:status-doctor
 ```
 
 This checks all dependencies, auth status, launcher path, runtime dist, cache
@@ -195,8 +214,9 @@ acli jira auth login --web
 
 **Status line shows `!` for Gmail or Tasks**
 
-```
-/claude-status:setup-google
+```bash
+gws auth status   # check if authenticated
+gws auth login    # if not, log in
 ```
 
 **Status line shows `status: build missing`**
@@ -247,16 +267,11 @@ $CLAUDE_PLUGIN_DATA/
         tasks.js
       coordinator.js        <- lock / stale / background-refresh logic
       cache.js              <- cache read helpers
-      google-auth.js        <- Google OAuth token management
-      google-auth-flow.js   <- one-time OAuth setup script
   cache/
     github.json
     gmail.json
     tasks.json
     jira.json
-  google/
-    client_secret.json      <- Desktop OAuth credentials (user-provided)
-    tokens.json             <- OAuth access + refresh tokens (auto-managed)
   locks/
     <service>.lock          <- prevents duplicate concurrent collectors
   logs/

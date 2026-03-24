@@ -4,19 +4,17 @@
  * Gmail unread count collector.
  *
  * Strategy:
- *  - Fetches the UNREAD system label info from the Gmail API.
- *  - Endpoint: GET https://gmail.googleapis.com/gmail/v1/users/me/labels/UNREAD
+ *  - Uses the Google Workspace CLI (`gws`) to fetch the UNREAD label info.
+ *  - Command: gws gmail users labels get --params '{"userId":"me","id":"UNREAD"}'
  *  - The `messagesUnread` field gives the total unread message count.
- *  - Uses the Google OAuth2 token from google-auth.ts.
  *  - Writes result to ${CLAUDE_PLUGIN_DATA}/cache/gmail.json.
  *
  * TTL: 5 minutes.
  */
 
-import * as https from 'https';
+import { execFile } from 'child_process';
 import type { CollectorResult, ErrorKind } from '../types';
 import { writeCacheFile } from '../coordinator';
-import { getValidAccessToken } from '../google-auth';
 
 const SERVICE = 'gmail';
 const TTL_MS = 5 * 60_000; // 5 minutes
@@ -38,15 +36,16 @@ interface GmailLabelResponse {
 // Error classification
 // ---------------------------------------------------------------------------
 
-function classifyError(err: unknown): { errorKind: ErrorKind; detail: string } {
+function classifyError(err: unknown, exitCode?: number): { errorKind: ErrorKind; detail: string } {
   const msg = err instanceof Error ? err.message : String(err);
 
-  if (/client_secret|tokens|OAuth|refresh_token|token.*not found/i.test(msg)) {
-    return { errorKind: 'auth', detail: `Google auth not configured: ${msg}` };
+  // gws exit code 2 = auth error
+  if (exitCode === 2 || /auth|credentials|login|401|403|unauthorized|forbidden/i.test(msg)) {
+    return { errorKind: 'auth', detail: `Gmail auth error: ${msg}` };
   }
 
-  if (/401|403|invalid_grant|invalid_token|unauthorized|forbidden/i.test(msg)) {
-    return { errorKind: 'auth', detail: `Gmail authentication failed: ${msg}` };
+  if (/not found|ENOENT|gws/i.test(msg) && /command|spawn/i.test(msg)) {
+    return { errorKind: 'dependency', detail: 'gws CLI not found. Install: npm install -g @googleworkspace/cli' };
   }
 
   if (/429|rateLimitExceeded|rate.?limit/i.test(msg)) {
@@ -61,64 +60,44 @@ function classifyError(err: unknown): { errorKind: ErrorKind; detail: string } {
 }
 
 // ---------------------------------------------------------------------------
-// HTTP helper
+// Run gws command
 // ---------------------------------------------------------------------------
 
-function httpsGet(url: string, accessToken: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const urlObj = new URL(url);
-    const options = {
-      hostname: urlObj.hostname,
-      path: urlObj.pathname + urlObj.search,
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: 'application/json',
-      },
-    };
-
-    const req = https.request(options, (res) => {
-      let data = '';
-      res.on('data', (chunk) => { data += chunk; });
-      res.on('end', () => {
-        if (res.statusCode === 401 || res.statusCode === 403) {
-          reject(new Error(`HTTP ${res.statusCode}: unauthorized or forbidden`));
-        } else if (res.statusCode === 429) {
-          reject(new Error(`HTTP 429: rate limit exceeded`));
-        } else if (res.statusCode && res.statusCode >= 400) {
-          reject(new Error(`HTTP ${res.statusCode}: ${data.slice(0, 200)}`));
-        } else {
-          resolve(data);
-        }
-      });
+function runGws(args: string[]): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  return new Promise((resolve) => {
+    execFile('gws', args, { timeout: 15_000 }, (err, stdout, stderr) => {
+      const exitCode = err && 'code' in err ? (err as { code: number }).code : 0;
+      resolve({ stdout: stdout ?? '', stderr: stderr ?? '', exitCode });
     });
-
-    req.on('error', reject);
-    req.setTimeout(15_000, () => {
-      req.destroy(new Error('Request timeout'));
-    });
-
-    req.end();
   });
 }
 
 // ---------------------------------------------------------------------------
-// Fetch UNREAD label info
+// Fetch UNREAD label info via gws
 // ---------------------------------------------------------------------------
 
-async function fetchUnreadCount(accessToken: string): Promise<number> {
-  const url = 'https://gmail.googleapis.com/gmail/v1/users/me/labels/UNREAD';
-  const raw = await httpsGet(url, accessToken);
+async function fetchUnreadCount(): Promise<number> {
+  const { stdout, stderr, exitCode } = await runGws([
+    'gmail', 'users', 'labels', 'get',
+    '--params', '{"userId":"me","id":"UNREAD"}',
+  ]);
+
+  if (exitCode !== 0) {
+    throw Object.assign(
+      new Error(stderr.trim() || stdout.trim() || `gws exited with code ${exitCode}`),
+      { exitCode },
+    );
+  }
 
   let parsed: GmailLabelResponse;
   try {
-    parsed = JSON.parse(raw) as GmailLabelResponse;
+    parsed = JSON.parse(stdout) as GmailLabelResponse;
   } catch {
-    throw new Error(`Failed to parse Gmail API response: ${raw.slice(0, 200)}`);
+    throw new Error(`Failed to parse gws output: ${stdout.slice(0, 200)}`);
   }
 
   if (parsed.messagesUnread === undefined) {
-    throw new Error(`Gmail API response missing messagesUnread field: ${raw.slice(0, 200)}`);
+    throw new Error(`Gmail API response missing messagesUnread field: ${stdout.slice(0, 200)}`);
   }
 
   return parsed.messagesUnread;
@@ -134,11 +113,7 @@ export async function collect(): Promise<void> {
   let result: CollectorResult;
 
   try {
-    // 1. Get a valid access token (refreshes if expired)
-    const accessToken = await getValidAccessToken();
-
-    // 2. Fetch unread count from Gmail API
-    const count = await fetchUnreadCount(accessToken);
+    const count = await fetchUnreadCount();
 
     result = {
       value: count,
@@ -150,7 +125,10 @@ export async function collect(): Promise<void> {
       source: SERVICE,
     };
   } catch (err) {
-    const { errorKind, detail } = classifyError(err);
+    const exitCode = err && typeof err === 'object' && 'exitCode' in err
+      ? (err as { exitCode: number }).exitCode
+      : undefined;
+    const { errorKind, detail } = classifyError(err, exitCode);
     result = {
       value: null,
       status: 'error',

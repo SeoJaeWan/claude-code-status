@@ -6,7 +6,7 @@
 claude-code-status/
   plugin.json          # Plugin manifest
   hooks/               # Claude Code lifecycle hooks (JS)
-  scripts/             # PowerShell launcher + Google auth setup
+  scripts/             # PowerShell launcher
   runtime/             # Node.js + TypeScript renderer
     src/               # Source files
       __tests__/       # Vitest unit tests
@@ -78,9 +78,8 @@ npm run test:watch
 | `coordinator.test.ts` | Cache TTL/freshness, lock lifecycle, stale lock cleanup, atomic writes |
 | `github.test.ts` | GitHub notification filtering, thread deduplication, error classification |
 | `jira.test.ts` | Jira JQL result parsing (multiple shapes), error classification |
-| `google-auth.test.ts` | Token expiry detection, credential loading, missing file errors |
 
-Tests do not require network access, external CLIs (`gh`, `acli`), or real Google credentials. All I/O is either pure logic or backed by temporary directories on disk.
+Tests do not require network access, external CLIs (`gh`, `acli`, `gws`), or real Google credentials. All I/O is either pure logic or backed by temporary directories on disk.
 
 ---
 

@@ -58,8 +58,6 @@ When a user updates the plugin (replaces the plugin directory with a newer versi
 
 Contents of `${CLAUDE_PLUGIN_DATA}` that survive an update:
 - `cache/*.json` — service cache files (reused by new version if schema is compatible)
-- `google/client_secret.json` — user's OAuth client credentials
-- `google/tokens.json` — user's OAuth tokens
 - `locks/*.lock` — transient lock files (cleaned up automatically)
 
 ### Schema migrations
@@ -115,11 +113,8 @@ ${CLAUDE_PLUGIN_DATA}/
     jira.json       # Jira open issue count cache (TTL: 5m)
     gmail.json      # Gmail unread count cache (TTL: 3m)
     tasks.json      # Google Tasks count cache (TTL: 10m)
-  google/
-    client_secret.json   # User's Google OAuth2 Desktop client credentials
-    tokens.json          # Access + refresh tokens (sensitive — do not share)
   locks/
     *.lock               # Transient refresh lock files (auto-cleaned)
 ```
 
-The `google/` directory contains sensitive credential data. Users should be advised not to include this directory in backups uploaded to cloud storage unless encrypted.
+Google credentials are managed by the `gws` CLI (stored in OS keyring or `~/.config/gws/`), not in the plugin data directory.

@@ -113,7 +113,7 @@ Then wait for the next status-line render cycle.
 ```
 
 - If Google credentials are set up: shows unread count / task count.
-- If not set up: shows instructions to run `/claude-status:setup-google`.
+- If not set up: shows instructions to run `gws auth login`.
 
 ---
 
@@ -132,13 +132,13 @@ Doctor should report: `gh: dependency error — not installed`.
 
 Restore `gh` to PATH and verify recovery on next render cycle.
 
-### Expired Google token
+### Google auth failure
 
-Manually corrupt `$CLAUDE_PLUGIN_DATA\google\tokens.json`:
+Temporarily revoke gws credentials (or rename the credential file):
 
 ```powershell
-'{"access_token":"bad","refresh_token":"","expiry_date":0}' |
-  Set-Content "$env:CLAUDE_PLUGIN_DATA\google\tokens.json"
+# On Windows, encrypted creds are in keyring; simulate by revoking:
+gws auth logout
 ```
 
 Trigger a Gmail cache refresh:
@@ -150,7 +150,7 @@ Remove-Item "$env:CLAUDE_PLUGIN_DATA\cache\gmail.json"
 Status bar should show `gmail !` (red `!`).
 Doctor should report auth error for Gmail.
 
-Run `/claude-status:setup-google` to re-authorise and verify recovery.
+Run `gws auth login` to re-authorise and verify recovery.
 
 ### Missing CLAUDE_PLUGIN_DATA
 
