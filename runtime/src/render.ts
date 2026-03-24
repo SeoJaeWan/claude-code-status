@@ -19,6 +19,7 @@
  */
 
 import { readCache, isFresh } from './cache';
+import { triggerRefreshIfStale } from './coordinator';
 import type {
   StatusLineInput,
   ServiceName,
@@ -98,10 +99,12 @@ function renderService(service: ServiceName): ServiceSegment {
   const result = readCache(service);
   const display = resultToDisplay(result);
 
-  // If stale, we could trigger background refresh here in a future phase.
-  // For Phase 1 skeleton, we just read and render.
-  if (result && !isFresh(result) && result.status === 'ok') {
-    // Stale but has a value — show it (Phase 3 will add background refresh)
+  // Trigger a background refresh if the cache is stale.
+  // triggerRefreshIfStale is non-blocking — it spawns a detached child process
+  // and returns immediately. The current (possibly stale) value is shown now;
+  // the next render cycle will pick up the refreshed cache.
+  if (!result || (result.status !== 'error' && !isFresh(result))) {
+    triggerRefreshIfStale(service);
   }
 
   return { name: service, display };

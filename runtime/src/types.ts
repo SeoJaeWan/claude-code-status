@@ -56,12 +56,12 @@ export interface CollectorResult {
   fetchedAt: string;
   /** Cache TTL in milliseconds. */
   ttlMs: number;
-  /** Error category (present when status !== 'ok'). */
-  errorKind?: ErrorKind;
-  /** Human-readable error detail for doctor/debug output. */
-  detail?: string;
-  /** Data source identifier (e.g. 'gmail-api', 'gh-cli', 'acli'). */
-  source?: string;
+  /** Error category; null when status is 'ok'. */
+  errorKind: ErrorKind | null;
+  /** Human-readable error detail for doctor/debug output; null when none. */
+  detail: string | null;
+  /** Data source identifier (service name, e.g. 'gmail', 'github'). */
+  source: string;
 }
 
 // ---------------------------------------------------------------------------
