@@ -1,0 +1,7 @@
+interface:
+  display_name: "Brainstorm"
+  short_description: "Resolve blocking policy ambiguity with options before planning."
+  default_prompt: "Use $brainstorm to compare viable policy directions, resolve blocking ambiguity, and hand off only decision-complete scope to planning."
+
+policy:
+  allow_implicit_invocation: true

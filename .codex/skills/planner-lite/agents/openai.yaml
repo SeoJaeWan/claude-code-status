@@ -1,0 +1,7 @@
+interface:
+  display_name: "Planner Lite"
+  short_description: "Execute plan.md phases by orchestrating child agents in isolated worktrees."
+  default_prompt: "Use /agent planner to execute a finalized plan.md. The planner agent should dispatch each phase to its mapped named custom agent, while the planner-lite workflow manages worktrees, validation, commits, and final merge coordination."
+
+policy:
+  allow_implicit_invocation: true

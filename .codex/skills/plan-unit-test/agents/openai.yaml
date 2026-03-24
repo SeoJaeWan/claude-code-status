@@ -1,0 +1,7 @@
+interface:
+  display_name: "Plan Unit Test"
+  short_description: "Generate stack-aware, constraint-mapped unit/logic tests as plan artifacts."
+  default_prompt: "Use $plan-unit-test to generate stack-aware, constraint-mapped unit/logic tests under ./plans/{task}/tests/."
+
+policy:
+  allow_implicit_invocation: true

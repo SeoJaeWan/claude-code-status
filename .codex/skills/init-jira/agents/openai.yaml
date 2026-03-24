@@ -1,0 +1,4 @@
+interface:
+  display_name: "Init Jira MCP"
+  short_description: "Add Atlassian Jira MCP to Codex and finish login"
+  default_prompt: "Use $init-jira to register Atlassian Jira MCP in Codex and complete OAuth login."

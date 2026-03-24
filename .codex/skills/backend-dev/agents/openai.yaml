@@ -1,0 +1,7 @@
+interface:
+  display_name: "Backend Dev"
+  short_description: "Implement backend APIs, DTOs, persistence, and auth logic."
+  default_prompt: "Use $backend-dev to implement backend API, database, auth, and validation logic after a plan is finalized."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Guard E2E Test"
+  short_description: "Add live-explored Playwright regression guards for multi-route user journeys."
+  default_prompt: "Use $guard-e2e-test to explore an implemented browser flow live and add a real Playwright regression guard for the full journey in the source test tree."
+
+policy:
+  allow_implicit_invocation: true

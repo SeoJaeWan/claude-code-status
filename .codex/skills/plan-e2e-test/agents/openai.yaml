@@ -1,0 +1,7 @@
+interface:
+  display_name: "Plan E2E Test"
+  short_description: "Generate frozen feature-level E2E plan artifacts with the right runner for the environment, such as Playwright for web and Maestro for mobile."
+  default_prompt: "Use $plan-e2e-test to generate frozen feature-level E2E plan artifacts under ./plans/{task}/e2e/ after all frontend UI contracts are resolved, choosing Playwright for web/browser surfaces and Maestro for React Native or Expo mobile surfaces."
+
+policy:
+  allow_implicit_invocation: true

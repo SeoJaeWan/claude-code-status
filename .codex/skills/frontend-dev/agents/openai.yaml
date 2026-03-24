@@ -1,0 +1,7 @@
+interface:
+  display_name: "Frontend Dev"
+  short_description: "Implement frontend logic with hooks and API integration."
+  default_prompt: "Use $frontend-dev to implement frontend logic, hooks, state, and API integration after a plan is finalized."
+
+policy:
+  allow_implicit_invocation: true

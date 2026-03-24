@@ -1,0 +1,7 @@
+interface:
+  display_name: "Architect"
+  short_description: "Create gated plans after resolving blocking ambiguity."
+  default_prompt: "Use $architect to resolve or reject blocking policy ambiguity before producing a decision-complete plan under ./plans and execution handoff."
+
+policy:
+  allow_implicit_invocation: true
