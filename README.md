@@ -27,6 +27,7 @@ Claude usage, Gmail, Tasks, Jira, GitHub — all in one status line.
 <div align="center">
 <img width="678" height="331" alt="image" src="https://github.com/user-attachments/assets/f5aac8b8-e59c-499b-a887-8b1101f98407" />
 </div>
+
 ```
 week 3% session 22% | gmail 7 | tasks 3 | jira 5 | github 4
 ```
