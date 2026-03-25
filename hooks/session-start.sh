@@ -24,7 +24,7 @@ BIN_DIR="$PLUGIN_DATA/bin"
 CACHE_DIR="$PLUGIN_DATA/cache"
 RUNTIME_DIR="$PLUGIN_DATA/runtime"
 VERSION_FILE="$PLUGIN_DATA/.plugin-version"
-LAUNCHER_DST="$BIN_DIR/status-line.ps1"
+LAUNCHER_DST="$BIN_DIR/status-line.sh"
 
 log() {
   local ts
@@ -145,7 +145,7 @@ fi
 # ---------------------------------------------------------------------------
 # 5. Install stable launcher to BIN_DIR
 # ---------------------------------------------------------------------------
-SRC_LAUNCHER="$PLUGIN_ROOT/scripts/status-line.ps1"
+SRC_LAUNCHER="$PLUGIN_ROOT/scripts/status-line.sh"
 
 if [[ -f "$SRC_LAUNCHER" ]]; then
   if [[ "$VERSION_CHANGED" == "true" ]] || [[ ! -f "$LAUNCHER_DST" ]]; then

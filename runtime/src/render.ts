@@ -3,13 +3,13 @@
  *
  * Main entrypoint for the claude-status statusLine renderer.
  *
- * Called by: scripts/status-line.ps1 (PowerShell launcher)
+ * Called by: scripts/status-line.sh (bash launcher)
  * Reads: stdin JSON from Claude Code, cache files from ${CLAUDE_PLUGIN_DATA}/cache/
  * Outputs: one-line status string to stdout
  *
  * CALL CHAIN:
  *   ~/.claude/settings.json (statusLine.command)
- *     -> status-line.ps1 (PowerShell launcher)
+ *     -> status-line.sh (bash launcher)
  *     -> node render.js  (this file, stdin piped through)
  *     -> stdout: "week 42% session 18% | gmail 7 | tasks 3 | jira 5 | github 4"
  *
@@ -32,12 +32,18 @@ import type {
 
 const ANSI_RESET  = '\x1b[0m';
 const ANSI_RED    = '\x1b[31m';
+const ANSI_GREEN  = '\x1b[32m';
 const ANSI_YELLOW = '\x1b[33m';
+const ANSI_CYAN   = '\x1b[36m';
 const ANSI_GRAY   = '\x1b[90m';
+const ANSI_WHITE  = '\x1b[97m';
 
 function red(s: string): string    { return `${ANSI_RED}${s}${ANSI_RESET}`; }
+function green(s: string): string  { return `${ANSI_GREEN}${s}${ANSI_RESET}`; }
 function yellow(s: string): string { return `${ANSI_YELLOW}${s}${ANSI_RESET}`; }
+function cyan(s: string): string   { return `${ANSI_CYAN}${s}${ANSI_RESET}`; }
 function gray(s: string): string   { return `${ANSI_GRAY}${s}${ANSI_RESET}`; }
+function white(s: string): string  { return `${ANSI_WHITE}${s}${ANSI_RESET}`; }
 
 // ---------------------------------------------------------------------------
 // Color thresholds per domain.md
@@ -46,35 +52,36 @@ function gray(s: string): string   { return `${ANSI_GRAY}${s}${ANSI_RESET}`; }
 function colorWeekSession(pct: number, text: string): string {
   if (pct >= 80) return red(text);
   if (pct >= 60) return yellow(text);
-  return text;
+  if (pct >= 30) return cyan(text);
+  return green(text);
 }
 
 function colorGmail(count: number, text: string): string {
   if (count === 0)  return gray(text);
   if (count >= 30)  return red(text);
   if (count >= 10)  return yellow(text);
-  return text;
+  return white(text);
 }
 
 function colorTasks(count: number, text: string): string {
   if (count === 0)  return gray(text);
   if (count >= 11)  return red(text);
   if (count >= 6)   return yellow(text);
-  return text;
+  return white(text);
 }
 
 function colorJira(count: number, text: string): string {
   if (count === 0)  return gray(text);
   if (count >= 11)  return red(text);
   if (count >= 6)   return yellow(text);
-  return text;
+  return white(text);
 }
 
 function colorGithub(count: number, text: string): string {
   if (count === 0)  return gray(text);
   if (count >= 8)   return red(text);
   if (count >= 4)   return yellow(text);
-  return text;
+  return white(text);
 }
 
 type ExternalService = Extract<ServiceName, 'gmail' | 'tasks' | 'jira' | 'github'>;
@@ -133,13 +140,13 @@ function renderWeekSession(input: StatusLineInput): string {
   let sessionStr: string | null = null;
 
   if (weekPct != null) {
-    const label = `week ${Math.round(weekPct)}%`;
-    weekStr = colorWeekSession(weekPct, label);
+    const pctStr = colorWeekSession(weekPct, `${Math.round(weekPct)}%`);
+    weekStr = `${gray('week')} ${pctStr}`;
   }
 
   if (sessionPct != null) {
-    const label = `session ${Math.round(sessionPct)}%`;
-    sessionStr = colorWeekSession(sessionPct, label);
+    const pctStr = colorWeekSession(sessionPct, `${Math.round(sessionPct)}%`);
+    sessionStr = `${gray('session')} ${pctStr}`;
   }
 
   const parts = [weekStr, sessionStr].filter((p): p is string => p !== null);
@@ -153,15 +160,15 @@ function renderWeekSession(input: StatusLineInput): string {
 /**
  * Converts a collector result to a colored display token.
  *
- *   error status       -> red '!'
- *   null value         -> gray '-'
- *   numeric value 0    -> gray '0'  (per domain.md: 0 is always gray)
- *   numeric value > 0  -> colored number per threshold
+ *   no cache / not configured -> null (service will be hidden)
+ *   error status              -> red '!'
+ *   numeric value 0           -> gray '0'
+ *   numeric value > 0         -> colored number per threshold
  */
-function resultToColoredDisplay(service: ExternalService, result: CollectorResult | null): string {
-  // No cache file at all
+function resultToColoredDisplay(service: ExternalService, result: CollectorResult | null): string | null {
+  // No cache file at all — service not configured, hide it
   if (!result) {
-    return gray('-');
+    return null;
   }
 
   // Collector reported an error
@@ -169,16 +176,16 @@ function resultToColoredDisplay(service: ExternalService, result: CollectorResul
     return red('!');
   }
 
-  // Value unavailable (pending / unknown)
+  // Value unavailable (pending / unknown) — service not yet fetched, hide it
   if (result.value === null) {
-    return gray('-');
+    return null;
   }
 
   const numStr = String(result.value);
   return applyServiceColor(service, result.value, numStr);
 }
 
-function renderService(service: ExternalService): string {
+function renderService(service: ExternalService): string | null {
   const result = readCache(service);
 
   // Trigger a background refresh if the cache is stale.
@@ -189,7 +196,13 @@ function renderService(service: ExternalService): string {
   }
 
   const display = resultToColoredDisplay(service, result);
-  return `${service} ${display}`;
+
+  // If display is null, the service is not configured — hide it entirely
+  if (display === null) {
+    return null;
+  }
+
+  return `${gray(service)} ${display}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -200,10 +213,11 @@ function formatStatusLine(
   weekSession: string,
   serviceSegments: string[],
 ): string {
-  const serviceStr = serviceSegments.join(' | ');
+  const sep = gray('|');
+  const serviceStr = serviceSegments.join(` ${sep} `);
 
   if (weekSession && serviceStr) {
-    return `${weekSession} | ${serviceStr}`;
+    return `${weekSession} ${sep} ${serviceStr}`;
   }
   if (weekSession) {
     return weekSession;
@@ -226,7 +240,7 @@ async function main(): Promise<void> {
     const input = parseStdinInput(rawStdin);
 
     const weekSession = renderWeekSession(input);
-    const segments    = SERVICES.map(renderService);
+    const segments    = SERVICES.map(renderService).filter((s): s is string => s !== null);
 
     const output = formatStatusLine(weekSession, segments);
 

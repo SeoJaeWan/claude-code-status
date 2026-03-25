@@ -12,7 +12,7 @@
  * TTL: 5 minutes.
  */
 
-import { execFile } from 'child_process';
+import { exec } from 'child_process';
 import type { CollectorResult, ErrorKind } from '../types';
 import { writeCacheFile } from '../coordinator';
 
@@ -64,8 +64,9 @@ function classifyError(err: unknown, exitCode?: number): { errorKind: ErrorKind;
 // ---------------------------------------------------------------------------
 
 function runGws(args: string[]): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  const escaped = args.map(a => `"${a.replace(/"/g, '\\"')}"`).join(' ');
   return new Promise((resolve) => {
-    execFile('gws', args, { timeout: 15_000 }, (err, stdout, stderr) => {
+    exec(`gws ${escaped}`, { timeout: 15_000 }, (err, stdout, stderr) => {
       const exitCode = err && 'code' in err ? (err as { code: number }).code : 0;
       resolve({ stdout: stdout ?? '', stderr: stderr ?? '', exitCode });
     });

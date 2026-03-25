@@ -20,12 +20,12 @@ Verify: Claude Code starts without errors and the plugin directory is recognised
 
 ---
 
-## Step 2 — Run install-global skill
+## Step 2 — Run install-status skill
 
 Inside Claude Code:
 
 ```
-/claude-status:install-global
+/claude-status:install-status
 ```
 
 Expected outcome:
@@ -36,7 +36,8 @@ Manual check — open `~/.claude/settings.json` and confirm a `statusLine` entry
 
 ```json
 "statusLine": {
-  "command": "powershell -NonInteractive -File \"<plugin_dir>/scripts/status-line.ps1\""
+  "type": "command",
+  "command": "<CLAUDE_PLUGIN_DATA>/bin/status-line.sh"
 }
 ```
 
@@ -167,7 +168,7 @@ Expected stdout: `status: render error` (the fallback line — never blank).
 ## Completion Checklist
 
 - [ ] Plugin loads without errors
-- [ ] `install-global` patches settings correctly
+- [ ] `install-status` patches settings correctly
 - [ ] Status bar shows week/session percentages
 - [ ] Doctor reports all checks
 - [ ] Each service shows correct data or a meaningful error indicator
