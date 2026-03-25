@@ -1,31 +1,90 @@
+<div align="center">
+
 # claude-code-status
 
-[한국어](README.ko.md)
+**A Claude Code plugin that brings your work dashboard into the terminal.**
 
-A Claude Code plugin that adds a live status line to the bottom of your terminal.
-See Claude usage (week/session) and external service notifications (Gmail, Tasks, Jira, GitHub) at a glance.
+Claude usage, Gmail, Tasks, Jira, GitHub — all in one status line.
+
+<p>
+  <a href="#tutorial">Install</a> &middot;
+  <a href="#why">Why?</a> &middot;
+  <a href="#what-it-shows">Features</a> &middot;
+  <a href="#available-commands">Commands</a> &middot;
+  <a href="#how-it-works">How it works</a>
+</p>
+
+<p>
+  <a href="https://github.com/SeoJaeWan/claude-code-status/stargazers"><img src="https://img.shields.io/github/stars/SeoJaeWan/claude-code-status?style=flat&color=f5a623" alt="GitHub stars"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
+  <img src="https://img.shields.io/badge/runtime-Node.js-339933?logo=nodedotjs&logoColor=white" alt="Node.js">
+  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey" alt="Platform">
+</p>
+
+<p><a href="README.ko.md">한국어</a></p>
+
+</div>
 
 ```
 week 3% session 22% | gmail 7 | tasks 3 | jira 5 | github 4
 ```
 
-- **week / session** — Claude Code plan usage (auto-collected from stdin JSON)
-- **gmail** — Unread Gmail count ([Google Workspace CLI](https://github.com/nicholasgasior/gws))
-- **tasks** — Incomplete Google Tasks count (Google Workspace CLI)
-- **jira** — Open issues assigned to you ([Atlassian CLI](https://developer.atlassian.com/cloud/acli/))
-- **github** — Unread PR notifications ([GitHub CLI](https://cli.github.com))
+---
 
-Services you haven't connected are automatically hidden — only set up what you need.
+## Why?
 
-### Color rules
+The default Claude Code status line shows almost nothing. You don't know:
+
+- **How close you are to rate limits** until you hit them
+- **How many unread emails** are piling up while you're deep in a coding session
+- **How many Jira tickets** are waiting for you
+- **Whether a PR review** just came in on GitHub
+
+Context switching to check each service breaks your flow. This plugin puts everything in one line at the bottom of your terminal — always visible, never in the way.
+
+Services you haven't connected are **automatically hidden**. Start with just the usage percentages, add services when you need them.
+
+---
+
+## What it shows
+
+| Segment | Source | What it tells you |
+|---|---|---|
+| `week 3%` | Claude Code rate limits | Weekly plan usage — pace yourself |
+| `session 22%` | Claude Code rate limits | Current session usage — watch for compaction |
+| `gmail 7` | Gmail API | Unread emails accumulating |
+| `tasks 3` | Google Tasks API | Incomplete to-dos |
+| `jira 5` | Jira API | Open issues assigned to you |
+| `github 4` | GitHub API | Unread PR notifications |
+
+### Color coding
+
+Colors change based on urgency so you can scan at a glance:
 
 | Segment | Green | Cyan | Yellow | Red | Gray |
 |---|---|---|---|---|---|
-| week / session | 0–29% | 30–59% | 60–79% | 80%+ | — |
-| gmail | 1–9 | — | 10–29 | 30+ | 0 |
-| tasks | 1–5 | — | 6–10 | 11+ | 0 |
-| jira | 1–5 | — | 6–10 | 11+ | 0 |
-| github | 1–3 | — | 4–7 | 8+ | 0 |
+| week / session | 0-29% | 30-59% | 60-79% | 80%+ | - |
+| gmail | 1-9 | - | 10-29 | 30+ | 0 |
+| tasks | 1-5 | - | 6-10 | 11+ | 0 |
+| jira | 1-5 | - | 6-10 | 11+ | 0 |
+| github | 1-3 | - | 4-7 | 8+ | 0 |
+
+---
+
+## Prerequisites
+
+| Requirement | Why |
+|---|---|
+| [Node.js](https://nodejs.org) v18+ | Runs the status line renderer and collectors |
+| [Claude Code](https://claude.ai/code) | The CLI this plugin extends |
+
+External service CLIs are **optional** — install only what you need:
+
+| Service | CLI | Install |
+|---|---|---|
+| Gmail / Tasks | [Google Workspace CLI](https://github.com/nicholasgasior/gws) | `npm install -g @nicholasgasior/gws` |
+| Jira | [Atlassian CLI](https://developer.atlassian.com/cloud/acli/) | [Download binary](https://developer.atlassian.com/cloud/acli/guides/install-acli/) |
+| GitHub | [GitHub CLI](https://cli.github.com) | `winget install GitHub.cli` / `brew install gh` |
 
 ---
 
@@ -34,7 +93,7 @@ Services you haven't connected are automatically hidden — only set up what you
 ### Step 1. Install the plugin
 
 ```bash
-claude plugin install claude-status
+claude plugin install claude-code-status
 ```
 
 ### Step 2. Wire the status line
@@ -52,7 +111,8 @@ This sets `statusLine.command` in `~/.claude/settings.json`.
 
 Authenticate only the services you want. Unauthenticated services stay hidden.
 
-#### Gmail & Google Tasks
+<details>
+<summary><b>Gmail & Google Tasks</b></summary>
 
 ```bash
 npm install -g @nicholasgasior/gws   # Install Google Workspace CLI
@@ -60,9 +120,12 @@ gws auth setup                        # Create Cloud project & enable APIs
 gws auth login                        # Browser-based OAuth consent
 ```
 
-> For manual setup without `gcloud`, see the [gws README](https://github.com/nicholasgasior/gws#manual-oauth-setup).
+For manual setup without `gcloud`, see the [gws README](https://github.com/nicholasgasior/gws#manual-oauth-setup).
 
-#### Jira
+</details>
+
+<details>
+<summary><b>Jira</b></summary>
 
 ```bash
 # Install Atlassian CLI (Windows example)
@@ -73,13 +136,18 @@ acli jira auth login --web
 
 A browser window will open — select your Atlassian site and approve the permissions.
 
-> The npm `acli` package is **not** the Atlassian CLI. Always use the official binary.
+> The npm `acli` package is **not** the Atlassian CLI. Always use the [official binary](https://developer.atlassian.com/cloud/acli/guides/install-acli/).
 
-#### GitHub
+</details>
+
+<details>
+<summary><b>GitHub</b></summary>
 
 ```bash
 gh auth login
 ```
+
+</details>
 
 ### Step 4. Verify everything works
 
@@ -109,23 +177,20 @@ Each failed check includes the exact command to fix it.
 
 ```
 [SessionStart hook]
-  - Copies status-line.sh to $CLAUDE_PLUGIN_DATA/bin/
-  - Builds TypeScript runtime -> dist/
+  Copies status-line.sh + pre-built dist/ to $CLAUDE_PLUGIN_DATA
+  Installs npm production dependencies
 
-[Status line render cycle]
-  Claude Code passes stdin JSON (rate_limits, model, session_id)
-    -> $CLAUDE_PLUGIN_DATA/bin/status-line.sh (bash launcher)
-    -> node render.js
-       - Extracts week/session usage from stdin
-       - Reads cache files for external services
-       - Spawns background refresh if cache is stale (non-blocking)
-       - Outputs one colored line
+[Status line render cycle]  (every few seconds)
+  Claude Code stdin JSON ──> status-line.sh ──> node render.js ──> stdout
+                                                    |
+                                         reads cache/*.json
+                                         spawns background refresh if stale
 
 [Background collectors]
   node collect.js --service <name>
-    - Calls the external CLI to fetch data
-    - Writes result to $CLAUDE_PLUGIN_DATA/cache/<service>.json
-    - Lock files prevent duplicate concurrent fetches
+    -> calls external CLI (gws / acli / gh)
+    -> writes $CLAUDE_PLUGIN_DATA/cache/<service>.json
+    -> lock files prevent duplicate fetches
 ```
 
 ### Cache TTL
@@ -139,17 +204,12 @@ Each failed check includes the exact command to fix it.
 
 ## Troubleshooting
 
-**Status line not showing**
--> Run `/claude-code-status:install-status` then restart Claude Code.
-
-**Service shows `!` (red)**
--> Authentication expired. Re-run the auth command from Step 3.
-
-**`status: build missing` appears**
--> TypeScript hasn't been compiled. Restart Claude Code — the SessionStart hook builds it automatically.
-
-**Force-refresh a specific service**
--> Use the `/claude-code-status:<service>-check` command and choose force refresh.
+| Problem | Solution |
+|---|---|
+| Status line not showing | Run `/claude-code-status:install-status`, restart Claude Code |
+| Service shows `!` (red) | Auth expired — re-run the auth command from Step 3 |
+| `status: build missing` | Restart Claude Code (SessionStart hook syncs dist/) |
+| Want to force-refresh | Use `/claude-code-status:<service>-check` |
 
 ---
 
@@ -158,19 +218,25 @@ Each failed check includes the exact command to fix it.
 ```
 $CLAUDE_PLUGIN_DATA/
   bin/
-    status-line.sh          <- Bash launcher (copied by SessionStart)
+    status-line.sh            <- Bash launcher (copied by SessionStart)
   runtime/
     dist/
-      render.js             <- Status line renderer
-      collect.js            <- Collector CLI dispatcher
+      render.js               <- Status line renderer
+      collect.js              <- Collector CLI dispatcher
       collectors/
         gmail.js, tasks.js, jira.js, github.js
-      coordinator.js        <- Lock / stale / background refresh logic
-      cache.js              <- Cache read helpers
+      coordinator.js          <- Lock / stale / background refresh
+      cache.js                <- Cache read helpers
   cache/
-    <service>.json          <- Cached data per service
+    <service>.json            <- Cached data per service
   locks/
-    <service>.lock          <- Prevents duplicate concurrent collectors
+    <service>.lock            <- Prevents duplicate concurrent collectors
   logs/
     launcher.log, session-start.log
 ```
+
+---
+
+## License
+
+[MIT](LICENSE)
