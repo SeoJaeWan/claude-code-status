@@ -221,6 +221,16 @@ Cache freshness:
 
 ---
 
+## Deriving CLAUDE_PLUGIN_DATA
+
+`$CLAUDE_PLUGIN_DATA` is only available inside hook/skill runtime contexts — it is NOT set when Claude executes Bash tool commands. Always resolve it explicitly:
+
+```bash
+CLAUDE_PLUGIN_DATA="$HOME/.claude/plugins/data/claude-code-status-claude-code-status"
+```
+
+Use this resolved value in ALL subsequent bash commands within this skill.
+
 ## Notes
 
 - This skill is read-only. It does not modify any files or settings.

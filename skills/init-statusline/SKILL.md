@@ -25,13 +25,29 @@ This skill replaces the need to restart Claude Code for the SessionStart hook.
 
 ## Steps
 
+### 0. Resolve plugin paths
+
+The environment variables `CLAUDE_PLUGIN_ROOT` and `CLAUDE_PLUGIN_DATA` are only available inside hook/skill runtime contexts — they are NOT available when Claude executes Bash tool commands. So you MUST resolve them from the known directory conventions:
+
+```bash
+# Find CLAUDE_PLUGIN_ROOT (versioned cache directory)
+CLAUDE_PLUGIN_ROOT=$(ls -d ~/.claude/plugins/cache/claude-code-status/claude-code-status/*/ 2>/dev/null | head -1 | sed 's:/$::')
+
+# CLAUDE_PLUGIN_DATA (persistent data directory)
+CLAUDE_PLUGIN_DATA="$HOME/.claude/plugins/data/claude-code-status-claude-code-status"
+```
+
+If `CLAUDE_PLUGIN_ROOT` is empty (no directory found), the plugin is not installed. Tell the user to run `claude plugin install claude-code-status` and `/reload-plugins` first, then stop.
+
+Use these resolved values as `export` in ALL subsequent bash commands. Do NOT rely on environment variables being set across separate Bash tool calls.
+
 ### 1. Bootstrap data directory
 
 Run the SessionStart hook manually. This creates the full directory structure under `$CLAUDE_PLUGIN_DATA`.
 
 ```bash
-CLAUDE_PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"
-CLAUDE_PLUGIN_DATA="$CLAUDE_PLUGIN_DATA"
+export CLAUDE_PLUGIN_ROOT="<resolved path from step 0>"
+export CLAUDE_PLUGIN_DATA="<resolved path from step 0>"
 bash "$CLAUDE_PLUGIN_ROOT/hooks/session-start.sh"
 ```
 
@@ -94,8 +110,7 @@ Print a summary:
 
 | Condition | Action |
 |---|---|
-| `CLAUDE_PLUGIN_ROOT` not set | Print error: plugin may not be installed. Run `claude plugin install claude-code-status` first |
-| `CLAUDE_PLUGIN_DATA` not set | Print error: plugin environment not available |
+| Plugin cache directory not found in `~/.claude/plugins/cache/claude-code-status/` | Plugin is not installed. Tell user to run `claude plugin install claude-code-status` first |
 | session-start.sh fails | Print the log file contents and stop |
 | Launcher file missing after bootstrap | Print error and session-start log |
 | Collector fails for a service | Non-fatal — print warning, continue to next service |

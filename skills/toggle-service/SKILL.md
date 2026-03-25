@@ -83,7 +83,10 @@ Tell the user:
 
 ## Deriving CLAUDE_PLUGIN_DATA
 
-If `$CLAUDE_PLUGIN_DATA` is not set, derive it:
+`$CLAUDE_PLUGIN_DATA` is only available inside hook/skill runtime contexts — it is NOT set when Claude executes Bash tool commands. Always resolve it explicitly:
+
 ```bash
 CLAUDE_PLUGIN_DATA="$HOME/.claude/plugins/data/claude-code-status-claude-code-status"
 ```
+
+IMPORTANT: When using this path in `node -e` commands, pass it as a command-line argument (`process.argv[1]`) rather than embedding via shell variable interpolation (`'$CONFIG'`), to avoid path issues on Windows where `$HOME` may resolve differently.
