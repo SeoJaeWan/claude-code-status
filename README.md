@@ -122,7 +122,7 @@ Authenticate only the services you want. Unauthenticated services stay hidden.
 <summary><b>Gmail & Google Tasks</b></summary>
 
 ```bash
-npm install -g @nicholasgasior/gws   # Install Google Workspace CLI
+npm install -g @googleworkspace/cli   # Install Google Workspace CLI
 gws auth setup                        # Create Cloud project & enable APIs
 gws auth login                        # Browser-based OAuth consent
 ```
