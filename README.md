@@ -96,16 +96,15 @@ External service CLIs are **optional** — install only what you need:
 claude plugin install claude-code-status
 ```
 
-### Step 2. Wire the status line
+### Step 2. Initialize everything
 
 Run this command inside a Claude Code conversation:
 
 ```
-/claude-code-status:install-status
+/claude-code-status:init-statusline
 ```
 
-This sets `statusLine.command` in `~/.claude/settings.json`.
-**Restart Claude Code** and the status line will appear at the bottom of your terminal.
+This single command does everything — bootstraps the data directory, wires `settings.json`, and populates the cache. **No restart required.** The status line will appear within a few seconds.
 
 ### Step 3. Connect external services (optional)
 
@@ -164,7 +163,8 @@ Each failed check includes the exact command to fix it.
 
 | Command | Description |
 |---|---|
-| `/claude-code-status:install-status` | Wire the status line into `settings.json` |
+| `/claude-code-status:init-statusline` | **Full setup** — bootstrap, wire settings, populate cache (no restart) |
+| `/claude-code-status:install-status` | Wire the status line into `settings.json` only |
 | `/claude-code-status:status-doctor` | Full health check with fix suggestions |
 | `/claude-code-status:gmail-check` | Gmail details / force refresh |
 | `/claude-code-status:tasks-check` | Google Tasks details / force refresh |

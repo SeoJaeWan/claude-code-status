@@ -96,16 +96,15 @@ week 3% session 22% | gmail 7 | tasks 3 | jira 5 | github 4
 claude plugin install claude-code-status
 ```
 
-### Step 2. 상태 표시줄 연결
+### Step 2. 초기화
 
 Claude Code 대화창에서 아래 명령어를 실행합니다.
 
 ```
-/claude-code-status:install-status
+/claude-code-status:init-statusline
 ```
 
-`~/.claude/settings.json`에 `statusLine.command`가 설정됩니다.
-설정 후 **Claude Code를 재시작**하면 터미널 하단에 상태 표시줄이 나타납니다.
+이 명령어 하나로 데이터 디렉토리 생성, settings.json 연결, 캐시 채우기를 모두 처리합니다. **재시작 불필요.** 몇 초 내로 상태 표시줄이 나타납니다.
 
 ### Step 3. 외부 서비스 연동 (선택)
 
@@ -164,7 +163,8 @@ gh auth login
 
 | 명령어 | 설명 |
 |---|---|
-| `/claude-code-status:install-status` | 상태 표시줄을 `settings.json`에 연결 |
+| `/claude-code-status:init-statusline` | **전체 초기화** — 부트스트랩, settings 연결, 캐시 채우기 (재시작 불필요) |
+| `/claude-code-status:install-status` | `settings.json`에 상태 표시줄만 연결 |
 | `/claude-code-status:status-doctor` | 전체 상태 점검 및 수정 가이드 |
 | `/claude-code-status:gmail-check` | Gmail 상세 확인 / 강제 새로고침 |
 | `/claude-code-status:tasks-check` | Google Tasks 상세 확인 / 강제 새로고침 |
