@@ -179,6 +179,7 @@ function triggerRefreshIfStale(service) {
             detached: true,
             stdio: 'ignore',
             env: { ...process.env },
+            windowsHide: true,
         });
         // Detach so the parent (render) process can exit without waiting
         child.unref();
@@ -202,6 +203,7 @@ function triggerForceRefresh(service) {
             detached: true,
             stdio: 'ignore',
             env: { ...process.env },
+            windowsHide: true,
         });
         child.unref();
     }

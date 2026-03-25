@@ -150,6 +150,7 @@ export function triggerRefreshIfStale(service: ServiceName): void {
         detached: true,
         stdio: 'ignore',
         env: { ...process.env },
+        windowsHide: true,
       },
     );
 
@@ -179,6 +180,7 @@ export function triggerForceRefresh(service: ServiceName): void {
         detached: true,
         stdio: 'ignore',
         env: { ...process.env },
+        windowsHide: true,
       },
     );
 
