@@ -5,7 +5,7 @@ user-invocable: true
 allowed-tools: "Read, Bash"
 ---
 
-Show cached Gmail unread details and optionally force a fresh fetch.
+Show Gmail unread count and individual message details.
 
 ## When to use
 
@@ -28,27 +28,50 @@ Parse the JSON and inspect the fields:
 | `status` | `ok` / `error` / `stale` / `pending` |
 | `value` | Unread message count (null if unavailable) |
 | `fetchedAt` | ISO 8601 timestamp of last successful fetch |
-| `ttlMs` | Cache TTL in milliseconds (300000 = 5 min) |
 | `errorKind` | `auth` / `dependency` / `rate_limit` / `transient` / `unknown` |
 | `detail` | Human-readable error description |
 
-### 2. If `status` is `ok` — show unread details
+### 2. If `status` is `ok` — fetch and show unread message details
 
-The cache file stores the count only.  To see the actual message list, run a
-force refresh which calls the Gmail API and prints full details:
+Use `gws` CLI directly to fetch the most recent unread messages (up to 10).
+
+**Step 2a.** Get unread message IDs:
 
 ```bash
-node "$CLAUDE_PLUGIN_DATA/runtime/dist/collect.js" --service gmail --force
+gws gmail users messages list --params '{"userId":"me","q":"is:unread","maxResults":10}'
 ```
 
-Then re-read the cache and display:
+Parse the `messages` array from the JSON output to get message IDs.
 
-- **Sender** (`from`)
-- **Subject** (`subject`)
-- **Received time** (`receivedAt`)
-- **Link** (`https://mail.google.com/mail/u/0/#inbox/<messageId>`)
+**Step 2b.** For each message ID, fetch metadata:
 
-Present the results as a table or numbered list, most recent first.
+```bash
+gws gmail users messages get --params '{"userId":"me","id":"<MESSAGE_ID>","format":"metadata","metadataHeaders":["From","Subject","Date"]}'
+```
+
+From each response, extract:
+- **From** — `payload.headers` where `name` is `"From"`
+- **Subject** — `payload.headers` where `name` is `"Subject"`
+- **Date** — `payload.headers` where `name` is `"Date"`
+- **Snippet** — `snippet` field (short preview text)
+- **Link** — `https://mail.google.com/mail/u/0/#inbox/<id>`
+
+**Step 2c.** Present results as a numbered list, most recent first:
+
+```
+Gmail unread: 7   (last updated: 2026-03-24T10:15:00Z)
+
+ 1. LinkedIn Premium <linkedin@em.linkedin.com>
+    Subject: 서재완님의 프로필 조회수가 늘고 있습니다.
+    Date: Tue, 24 Mar 2026 17:26:30 -0700
+    Link: https://mail.google.com/mail/u/0/#inbox/19d2262caca83b98
+
+ 2. GitHub <noreply@github.com>
+    Subject: [myorg/myrepo] PR #42 approved
+    Date: Tue, 24 Mar 2026 09:55:00 -0700
+    Link: https://mail.google.com/mail/u/0/#inbox/19d22559c585d41e
+...
+```
 
 ### 3. If `status` is `error` — show error cause
 
@@ -57,53 +80,21 @@ Read `errorKind` and `detail` from the cache and explain what went wrong:
 | `errorKind` | Likely cause | Recommended fix |
 |---|---|---|
 | `auth` | gws not authenticated | Run `gws auth login` |
-| `dependency` | Required dependency missing | Check that Node.js and internet access are available |
+| `dependency` | gws CLI not installed | Run `npm install -g @nicholasgasior/gws` |
 | `rate_limit` | Gmail API quota exceeded | Wait a few minutes, then retry |
-| `transient` | Temporary network error | Retry with `--force` |
+| `transient` | Temporary network error | Retry later |
 | `unknown` | Unexpected error | See `detail` field for raw error message |
 
-### 4. Force refresh
+### 4. Force refresh (count only)
 
-To fetch fresh data immediately (bypasses TTL):
+To refresh the unread count in the status line cache:
 
 ```bash
-node "$CLAUDE_PLUGIN_DATA/runtime/dist/collect.js" --service gmail --force
-```
-
-Wait for the command to complete, then re-read the cache file to see updated
-results.
-
-## Example output (status ok)
-
-```
-Gmail unread: 7   (last updated: 2026-03-24T10:15:00Z)
-
- 1. Alice Smith <alice@example.com>
-    Subject: Q1 Budget Review
-    Received: 2026-03-24T10:12:00Z
-    Link: https://mail.google.com/mail/u/0/#inbox/18e2f3a4b5c6d7e8
-
- 2. GitHub <noreply@github.com>
-    Subject: [myorg/myrepo] PR #42 approved
-    Received: 2026-03-24T09:55:00Z
-    Link: https://mail.google.com/mail/u/0/#inbox/18e2f3a4b5c6d001
-...
-```
-
-## Example output (status error — auth)
-
-```
-Gmail status: ERROR
-Error kind:   auth
-Detail:       Gmail auth error: Access denied. No credentials provided. Run `gws auth login`.
-
-Fix: Run `gws auth login` to authenticate.
+CLAUDE_PLUGIN_DATA="$CLAUDE_PLUGIN_DATA" node "$CLAUDE_PLUGIN_DATA/runtime/dist/collect.js" --service gmail --force
 ```
 
 ## Notes
 
-- The cache holds only the unread count.  Individual message details require a
-  live API call via `--force`.
-- Gmail marks messages as read when you open them in the Gmail web UI or app.
-  The next scheduled refresh will pick up the updated count automatically.
+- The status line cache stores only the unread count. Individual messages are fetched live via gws when this skill runs.
 - Cache TTL for Gmail is **5 minutes**.
+- Only the 10 most recent unread messages are shown to keep output concise.
