@@ -177,7 +177,14 @@ export async function collect(): Promise<void> {
       }
     }
 
-    const items: CollectorItem[] = allTasks.map(({ task, listTitle }) => ({
+    // Filter: only tasks due today (local timezone)
+    const todayStr = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+    const todayTasks = allTasks.filter(({ task }) => {
+      if (!task.due) return false;
+      return task.due.slice(0, 10) === todayStr;
+    });
+
+    const items: CollectorItem[] = todayTasks.map(({ task, listTitle }) => ({
       title: task.title ?? '(untitled)',
       link: 'https://tasks.google.com',
       meta: {
@@ -187,7 +194,7 @@ export async function collect(): Promise<void> {
     }));
 
     result = {
-      value: allTasks.length,
+      value: todayTasks.length,
       status: 'ok',
       fetchedAt: now,
       ttlMs: TTL_MS,
