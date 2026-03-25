@@ -16,7 +16,7 @@
 import * as https from 'https';
 import * as fs from 'fs';
 import * as path from 'path';
-import type { CollectorResult, ErrorKind } from '../types';
+import type { CollectorResult, CollectorItem, ErrorKind } from '../types';
 import { writeCacheFile } from '../coordinator';
 import { getPluginDataDir } from '../cache';
 
@@ -44,6 +44,10 @@ interface PluginConfig {
 
 interface SlackChannel {
   id: string;
+  name?: string;
+  user?: string;
+  is_im?: boolean;
+  is_mpim?: boolean;
   unread_count?: number;
 }
 
@@ -58,8 +62,14 @@ interface SlackConversationsListResponse {
 
 interface SlackConversationsInfoResponse {
   ok: boolean;
-  channel?: SlackChannel;
+  channel?: SlackChannel & { name?: string };
   error?: string;
+}
+
+interface SlackUnreadDetail {
+  name: string;
+  unreadCount: number;
+  type: 'dm' | 'channel';
 }
 
 // ---------------------------------------------------------------------------
@@ -142,8 +152,8 @@ function httpsGet(url: string, token: string): Promise<string> {
 // Slack API calls
 // ---------------------------------------------------------------------------
 
-async function fetchDmUnreadCounts(token: string): Promise<number> {
-  let total = 0;
+async function fetchDmUnreadDetails(token: string): Promise<SlackUnreadDetail[]> {
+  const details: SlackUnreadDetail[] = [];
   let cursor = '';
 
   do {
@@ -163,16 +173,23 @@ async function fetchDmUnreadCounts(token: string): Promise<number> {
     }
 
     for (const channel of parsed.channels ?? []) {
-      total += channel.unread_count ?? 0;
+      const count = channel.unread_count ?? 0;
+      if (count > 0) {
+        details.push({
+          name: channel.user ?? channel.name ?? channel.id,
+          unreadCount: count,
+          type: 'dm',
+        });
+      }
     }
 
     cursor = parsed.response_metadata?.next_cursor ?? '';
   } while (cursor);
 
-  return total;
+  return details;
 }
 
-async function fetchChannelUnreadCount(token: string, channelId: string): Promise<number> {
+async function fetchChannelUnreadDetail(token: string, channelId: string): Promise<SlackUnreadDetail | null> {
   const url = `${API_BASE}/conversations.info?channel=${encodeURIComponent(channelId)}`;
   const raw = await httpsGet(url, token);
 
@@ -187,14 +204,24 @@ async function fetchChannelUnreadCount(token: string, channelId: string): Promis
     throw new Error(parsed.error ?? `Unknown Slack API error from conversations.info for channel ${channelId}`);
   }
 
-  return parsed.channel?.unread_count ?? 0;
+  const count = parsed.channel?.unread_count ?? 0;
+  return {
+    name: parsed.channel?.name ?? channelId,
+    unreadCount: count,
+    type: 'channel',
+  };
 }
 
 // ---------------------------------------------------------------------------
 // Main fetch
 // ---------------------------------------------------------------------------
 
-async function fetchUnreadCount(): Promise<number> {
+interface SlackFetchResult {
+  total: number;
+  items: CollectorItem[];
+}
+
+async function fetchUnreadDetails(): Promise<SlackFetchResult> {
   const slackConfig = readSlackConfig();
 
   if (!slackConfig.token) {
@@ -204,16 +231,31 @@ async function fetchUnreadCount(): Promise<number> {
   const token = slackConfig.token;
   const channelIds = slackConfig.channels ?? [];
 
-  // Fetch DM + MPIM unread counts
-  const dmCount = await fetchDmUnreadCounts(token);
+  // Fetch DM + MPIM unread details
+  const dmDetails = await fetchDmUnreadDetails(token);
 
-  // Fetch configured channel unread counts
-  let channelCount = 0;
+  // Fetch configured channel unread details
+  const channelDetails: SlackUnreadDetail[] = [];
   for (const channelId of channelIds) {
-    channelCount += await fetchChannelUnreadCount(token, channelId);
+    const detail = await fetchChannelUnreadDetail(token, channelId);
+    if (detail) channelDetails.push(detail);
   }
 
-  return dmCount + channelCount;
+  const allDetails = [...dmDetails, ...channelDetails];
+  const total = allDetails.reduce((sum, d) => sum + d.unreadCount, 0);
+
+  const items: CollectorItem[] = allDetails
+    .filter(d => d.unreadCount > 0)
+    .map(d => ({
+      title: d.type === 'dm' ? `@${d.name}` : `#${d.name}`,
+      link: null,
+      meta: {
+        unread: d.unreadCount,
+        type: d.type,
+      },
+    }));
+
+  return { total, items };
 }
 
 // ---------------------------------------------------------------------------
@@ -226,16 +268,17 @@ export async function collect(): Promise<void> {
   let result: CollectorResult;
 
   try {
-    const count = await fetchUnreadCount();
+    const { total, items } = await fetchUnreadDetails();
 
     result = {
-      value: count,
+      value: total,
       status: 'ok',
       fetchedAt: now,
       ttlMs: TTL_MS,
       errorKind: null,
       detail: null,
       source: SERVICE,
+      items,
     };
   } catch (err) {
     const { errorKind, detail } = classifyError(err);

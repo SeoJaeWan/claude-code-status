@@ -54,28 +54,44 @@ function checkAcliAuth() {
     }
 }
 // ---------------------------------------------------------------------------
-// Execute JQL via workitem search --count and extract number
+// Fetch issues with details via workitem search --json
 // ---------------------------------------------------------------------------
-function fetchIssueCount() {
+function fetchIssues() {
     let raw;
     try {
-        raw = (0, child_process_1.execSync)(`acli jira workitem search --jql "${JQL.replace(/"/g, '\\"')}" --count`, { encoding: 'utf8', timeout: 30000, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+        raw = (0, child_process_1.execSync)(`acli jira workitem search --jql "${JQL.replace(/"/g, '\\"')}" --fields "key,summary,priority,status" --json`, { encoding: 'utf8', timeout: 30000, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
     }
     catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         throw new Error(msg);
     }
-    // Expected output: "✓ Number of work items in the search: 4"
-    const match = raw.match(/:\s*(\d+)/);
-    if (match) {
-        return parseInt(match[1], 10);
+    try {
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) {
+            throw new Error('Unexpected response format');
+        }
+        return parsed;
     }
-    // Fallback: try to find any number in the output
-    const numMatch = raw.match(/(\d+)/);
-    if (numMatch) {
-        return parseInt(numMatch[1], 10);
+    catch {
+        throw new Error(`Could not parse acli JSON output: ${raw.slice(0, 200)}`);
     }
-    throw new Error(`Could not parse count from acli output: ${raw.slice(0, 200)}`);
+}
+function issuesToItems(issues) {
+    return issues.map((issue) => {
+        // Derive browse URL from self URL: https://<site>.atlassian.net/rest/api/3/issue/123 -> https://<site>.atlassian.net/browse/WEB-434
+        const siteMatch = issue.self?.match(/^(https:\/\/[^/]+)/);
+        const siteUrl = siteMatch ? siteMatch[1] : null;
+        const link = siteUrl ? `${siteUrl}/browse/${issue.key}` : null;
+        return {
+            title: issue.fields?.summary ?? issue.key,
+            link,
+            meta: {
+                key: issue.key,
+                priority: issue.fields?.priority?.name ?? null,
+                status: issue.fields?.status?.name ?? null,
+            },
+        };
+    });
 }
 // ---------------------------------------------------------------------------
 // Main collect function
@@ -86,16 +102,18 @@ async function collect() {
     try {
         // 1. Verify acli is available and authenticated
         checkAcliAuth();
-        // 2. Execute JQL and get count
-        const count = fetchIssueCount();
+        // 2. Execute JQL and get issues with details
+        const issues = fetchIssues();
+        const items = issuesToItems(issues);
         result = {
-            value: count,
+            value: issues.length,
             status: 'ok',
             fetchedAt: now,
             ttlMs: TTL_MS,
             errorKind: null,
             detail: null,
             source: SERVICE,
+            items,
         };
     }
     catch (err) {

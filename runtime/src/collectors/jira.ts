@@ -14,7 +14,7 @@
  */
 
 import { execSync } from 'child_process';
-import type { CollectorResult, ErrorKind } from '../types';
+import type { CollectorResult, CollectorItem, ErrorKind } from '../types';
 import { writeCacheFile } from '../coordinator';
 
 const SERVICE = 'jira';
@@ -64,14 +64,28 @@ function checkAcliAuth(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Execute JQL via workitem search --count and extract number
+// Jira API response types
 // ---------------------------------------------------------------------------
 
-function fetchIssueCount(): number {
+interface JiraIssue {
+  key: string;
+  self: string;
+  fields: {
+    summary?: string;
+    priority?: { name?: string };
+    status?: { name?: string };
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Fetch issues with details via workitem search --json
+// ---------------------------------------------------------------------------
+
+function fetchIssues(): JiraIssue[] {
   let raw: string;
   try {
     raw = execSync(
-      `acli jira workitem search --jql "${JQL.replace(/"/g, '\\"')}" --count`,
+      `acli jira workitem search --jql "${JQL.replace(/"/g, '\\"')}" --fields "key,summary,priority,status" --json`,
       { encoding: 'utf8', timeout: 30_000, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true },
     );
   } catch (err) {
@@ -79,19 +93,34 @@ function fetchIssueCount(): number {
     throw new Error(msg);
   }
 
-  // Expected output: "✓ Number of work items in the search: 4"
-  const match = raw.match(/:\s*(\d+)/);
-  if (match) {
-    return parseInt(match[1], 10);
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) {
+      throw new Error('Unexpected response format');
+    }
+    return parsed as JiraIssue[];
+  } catch {
+    throw new Error(`Could not parse acli JSON output: ${raw.slice(0, 200)}`);
   }
+}
 
-  // Fallback: try to find any number in the output
-  const numMatch = raw.match(/(\d+)/);
-  if (numMatch) {
-    return parseInt(numMatch[1], 10);
-  }
+function issuesToItems(issues: JiraIssue[]): CollectorItem[] {
+  return issues.map((issue) => {
+    // Derive browse URL from self URL: https://<site>.atlassian.net/rest/api/3/issue/123 -> https://<site>.atlassian.net/browse/WEB-434
+    const siteMatch = issue.self?.match(/^(https:\/\/[^/]+)/);
+    const siteUrl = siteMatch ? siteMatch[1] : null;
+    const link = siteUrl ? `${siteUrl}/browse/${issue.key}` : null;
 
-  throw new Error(`Could not parse count from acli output: ${raw.slice(0, 200)}`);
+    return {
+      title: issue.fields?.summary ?? issue.key,
+      link,
+      meta: {
+        key: issue.key,
+        priority: issue.fields?.priority?.name ?? null,
+        status: issue.fields?.status?.name ?? null,
+      },
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -107,17 +136,19 @@ export async function collect(): Promise<void> {
     // 1. Verify acli is available and authenticated
     checkAcliAuth();
 
-    // 2. Execute JQL and get count
-    const count = fetchIssueCount();
+    // 2. Execute JQL and get issues with details
+    const issues = fetchIssues();
+    const items = issuesToItems(issues);
 
     result = {
-      value: count,
+      value: issues.length,
       status: 'ok',
       fetchedAt: now,
       ttlMs: TTL_MS,
       errorKind: null,
       detail: null,
       source: SERVICE,
+      items,
     };
   } catch (err) {
     const { errorKind, detail } = classifyError(err);

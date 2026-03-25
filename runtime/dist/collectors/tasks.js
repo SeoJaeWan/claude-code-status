@@ -69,10 +69,7 @@ async function fetchTaskLists() {
     }
     return parsed.items ?? [];
 }
-// ---------------------------------------------------------------------------
-// Fetch needsAction tasks for a single task list
-// ---------------------------------------------------------------------------
-async function fetchNeedsActionCount(taskListId) {
+async function fetchNeedsActionTasks(taskListId) {
     const params = JSON.stringify({
         tasklist: taskListId,
         showCompleted: false,
@@ -94,7 +91,7 @@ async function fetchNeedsActionCount(taskListId) {
         throw new Error(`Failed to parse tasks response for list ${taskListId}: ${stdout.slice(0, 200)}`);
     }
     const items = parsed.items ?? [];
-    return items.filter((t) => t.status === 'needsAction').length;
+    return items.filter((t) => t.status === 'needsAction');
 }
 // ---------------------------------------------------------------------------
 // Main collect function
@@ -104,19 +101,30 @@ async function collect() {
     let result;
     try {
         const taskLists = await fetchTaskLists();
-        let totalCount = 0;
+        const allTasks = [];
         for (const list of taskLists) {
-            const count = await fetchNeedsActionCount(list.id);
-            totalCount += count;
+            const tasks = await fetchNeedsActionTasks(list.id);
+            for (const task of tasks) {
+                allTasks.push({ task, listTitle: list.title });
+            }
         }
+        const items = allTasks.map(({ task, listTitle }) => ({
+            title: task.title ?? '(untitled)',
+            link: 'https://tasks.google.com',
+            meta: {
+                list: listTitle,
+                due: task.due ?? null,
+            },
+        }));
         result = {
-            value: totalCount,
+            value: allTasks.length,
             status: 'ok',
             fetchedAt: now,
             ttlMs: TTL_MS,
             errorKind: null,
             detail: null,
             source: SERVICE,
+            items,
         };
     }
     catch (err) {

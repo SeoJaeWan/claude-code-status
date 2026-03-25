@@ -13,7 +13,7 @@
  */
 
 import { exec } from 'child_process';
-import type { CollectorResult, ErrorKind } from '../types';
+import type { CollectorResult, CollectorItem, ErrorKind } from '../types';
 import { writeCacheFile } from '../coordinator';
 
 const SERVICE = 'gmail';
@@ -30,6 +30,24 @@ interface GmailLabelResponse {
   messagesUnread?: number;
   threadsTotal?: number;
   threadsUnread?: number;
+}
+
+interface GmailMessage {
+  id: string;
+  threadId?: string;
+}
+
+interface GmailMessagesListResponse {
+  messages?: GmailMessage[];
+  resultSizeEstimate?: number;
+}
+
+interface GmailMessageDetail {
+  id: string;
+  snippet?: string;
+  payload?: {
+    headers?: Array<{ name: string; value: string }>;
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -105,6 +123,57 @@ async function fetchUnreadCount(): Promise<number> {
 }
 
 // ---------------------------------------------------------------------------
+// Fetch unread message details (up to 10 most recent)
+// ---------------------------------------------------------------------------
+
+async function fetchUnreadItems(): Promise<CollectorItem[]> {
+  // List unread messages (max 10)
+  const listResult = await runGws([
+    'gmail', 'users', 'messages', 'list',
+    '--params', '{"userId":"me","q":"is:unread","maxResults":10}',
+  ]);
+
+  if (listResult.exitCode !== 0) return [];
+
+  let listParsed: GmailMessagesListResponse;
+  try {
+    listParsed = JSON.parse(listResult.stdout) as GmailMessagesListResponse;
+  } catch {
+    return [];
+  }
+
+  const messages = listParsed.messages ?? [];
+  const items: CollectorItem[] = [];
+
+  for (const msg of messages) {
+    try {
+      const detailResult = await runGws([
+        'gmail', 'users', 'messages', 'get',
+        '--params', JSON.stringify({ userId: 'me', id: msg.id, format: 'metadata', metadataHeaders: ['From', 'Subject', 'Date'] }),
+      ]);
+
+      if (detailResult.exitCode !== 0) continue;
+
+      const detail = JSON.parse(detailResult.stdout) as GmailMessageDetail;
+      const headers = detail.payload?.headers ?? [];
+      const from = headers.find(h => h.name === 'From')?.value ?? 'Unknown';
+      const subject = headers.find(h => h.name === 'Subject')?.value ?? '(no subject)';
+      const date = headers.find(h => h.name === 'Date')?.value ?? null;
+
+      items.push({
+        title: subject,
+        link: `https://mail.google.com/mail/u/0/#inbox/${msg.id}`,
+        meta: { from, date },
+      });
+    } catch {
+      // Skip individual message errors
+    }
+  }
+
+  return items;
+}
+
+// ---------------------------------------------------------------------------
 // Main collect function
 // ---------------------------------------------------------------------------
 
@@ -116,6 +185,14 @@ export async function collect(): Promise<void> {
   try {
     const count = await fetchUnreadCount();
 
+    // Fetch detailed items (best-effort, don't fail on this)
+    let items: CollectorItem[] | null = null;
+    try {
+      items = await fetchUnreadItems();
+    } catch {
+      // Items are optional — count is the primary data
+    }
+
     result = {
       value: count,
       status: 'ok',
@@ -124,6 +201,7 @@ export async function collect(): Promise<void> {
       errorKind: null,
       detail: null,
       source: SERVICE,
+      items,
     };
   } catch (err) {
     const exitCode = err && typeof err === 'object' && 'exitCode' in err

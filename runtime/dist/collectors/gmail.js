@@ -74,6 +74,51 @@ async function fetchUnreadCount() {
     return parsed.messagesUnread;
 }
 // ---------------------------------------------------------------------------
+// Fetch unread message details (up to 10 most recent)
+// ---------------------------------------------------------------------------
+async function fetchUnreadItems() {
+    // List unread messages (max 10)
+    const listResult = await runGws([
+        'gmail', 'users', 'messages', 'list',
+        '--params', '{"userId":"me","q":"is:unread","maxResults":10}',
+    ]);
+    if (listResult.exitCode !== 0)
+        return [];
+    let listParsed;
+    try {
+        listParsed = JSON.parse(listResult.stdout);
+    }
+    catch {
+        return [];
+    }
+    const messages = listParsed.messages ?? [];
+    const items = [];
+    for (const msg of messages) {
+        try {
+            const detailResult = await runGws([
+                'gmail', 'users', 'messages', 'get',
+                '--params', JSON.stringify({ userId: 'me', id: msg.id, format: 'metadata', metadataHeaders: ['From', 'Subject', 'Date'] }),
+            ]);
+            if (detailResult.exitCode !== 0)
+                continue;
+            const detail = JSON.parse(detailResult.stdout);
+            const headers = detail.payload?.headers ?? [];
+            const from = headers.find(h => h.name === 'From')?.value ?? 'Unknown';
+            const subject = headers.find(h => h.name === 'Subject')?.value ?? '(no subject)';
+            const date = headers.find(h => h.name === 'Date')?.value ?? null;
+            items.push({
+                title: subject,
+                link: `https://mail.google.com/mail/u/0/#inbox/${msg.id}`,
+                meta: { from, date },
+            });
+        }
+        catch {
+            // Skip individual message errors
+        }
+    }
+    return items;
+}
+// ---------------------------------------------------------------------------
 // Main collect function
 // ---------------------------------------------------------------------------
 async function collect() {
@@ -81,6 +126,14 @@ async function collect() {
     let result;
     try {
         const count = await fetchUnreadCount();
+        // Fetch detailed items (best-effort, don't fail on this)
+        let items = null;
+        try {
+            items = await fetchUnreadItems();
+        }
+        catch {
+            // Items are optional — count is the primary data
+        }
         result = {
             value: count,
             status: 'ok',
@@ -89,6 +142,7 @@ async function collect() {
             errorKind: null,
             detail: null,
             source: SERVICE,
+            items,
         };
     }
     catch (err) {

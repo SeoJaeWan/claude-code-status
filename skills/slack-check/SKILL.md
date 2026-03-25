@@ -5,7 +5,7 @@ user-invocable: true
 allowed-tools: "Read, Bash"
 ---
 
-Show Slack unread count breakdown and optionally force a fresh fetch.
+Show Slack unread count breakdown from cache.
 
 ## When to use
 
@@ -22,59 +22,41 @@ CLAUDE_PLUGIN_DATA="${CLAUDE_PLUGIN_DATA:-$HOME/.claude/plugins/data/claude-code
 cat "$CLAUDE_PLUGIN_DATA/cache/slack.json"
 ```
 
-Parse the JSON and inspect the fields:
+Parse the JSON. The `items` array contains the per-channel/DM unread breakdown.
 
-| Field | Meaning |
+### 2. If `status` is `ok` — display the items
+
+The `items` array contains objects with:
+
+| Field | Example |
 |---|---|
-| `status` | `ok` / `error` / `stale` / `pending` |
-| `value` | Total unread count (DMs + configured channels), null if unavailable |
-| `fetchedAt` | ISO 8601 timestamp of last successful fetch |
-| `ttlMs` | Cache TTL in milliseconds (120000 = 2 min) |
-| `errorKind` | `auth` / `dependency` / `rate_limit` / `transient` / `unknown` |
-| `detail` | Human-readable error description |
+| `title` | `@john` (DM) or `#dev-team` (channel) |
+| `meta.unread` | `3` |
+| `meta.type` | `dm` or `channel` |
 
-### 2. If `status` is `ok` — show unread breakdown
+Present as two groups: DMs and Channels. Show each with its unread count.
 
-Read the config to get the token and channel list:
+### 3. If `status` is `error` — show error cause
 
-```bash
-cat "$CLAUDE_PLUGIN_DATA/config.json"
-```
+| `errorKind` | Likely cause | Recommended fix |
+|---|---|---|
+| `auth` | Token revoked or invalid | Run `/claude-code-status:slack-setup` to re-configure |
+| `dependency` | Token not configured | Run `/claude-code-status:slack-setup` |
+| `rate_limit` | Slack API rate limit exceeded | Wait 2 minutes, then retry |
+| `transient` | Temporary network error | Force refresh |
 
-Then fetch a live breakdown using the Slack API:
-
-**DM unread counts:**
+### 4. Force refresh (if user requests)
 
 ```bash
-TOKEN="<from config.json slack.token>"
-curl -s -H "Authorization: Bearer $TOKEN" "https://slack.com/api/conversations.list?types=im,mpim&exclude_archived=true&limit=200" | node -e "
-const chunks = []; process.stdin.on('data', c => chunks.push(c)); process.stdin.on('end', () => {
-  const r = JSON.parse(Buffer.concat(chunks).toString());
-  if (!r.ok) { console.log('ERROR: ' + r.error); return; }
-  let total = 0;
-  const unread = (r.channels || []).filter(c => (c.unread_count || 0) > 0);
-  unread.forEach(ch => {
-    total += ch.unread_count;
-    console.log('  DM ' + ch.id + ': ' + ch.unread_count + ' unread');
-  });
-  console.log('DM total: ' + total);
-});
-"
+CLAUDE_PLUGIN_DATA="${CLAUDE_PLUGIN_DATA:-$HOME/.claude/plugins/data/claude-code-status-claude-code-status}"
+rm -f "$CLAUDE_PLUGIN_DATA/locks/slack.lock"
+node "$CLAUDE_PLUGIN_DATA/runtime/dist/collect.js" --service slack --force 2>&1
+cat "$CLAUDE_PLUGIN_DATA/cache/slack.json"
 ```
 
-**Channel unread counts (for each configured channel):**
+Then display the updated items.
 
-```bash
-curl -s -H "Authorization: Bearer $TOKEN" "https://slack.com/api/conversations.info?channel=<CHANNEL_ID>" | node -e "
-const chunks = []; process.stdin.on('data', c => chunks.push(c)); process.stdin.on('end', () => {
-  const r = JSON.parse(Buffer.concat(chunks).toString());
-  if (!r.ok) { console.log('ERROR: ' + r.error); return; }
-  console.log('  #' + r.channel.name + ': ' + (r.channel.unread_count || 0) + ' unread');
-});
-"
-```
-
-Present results as:
+## Example output
 
 ```
 Slack unread: 5   (last updated: 2026-03-25T10:15:00Z)
@@ -88,42 +70,9 @@ Channels:
   #alerts: 1
 ```
 
-### 3. If `status` is `error` — show error cause
-
-| `errorKind` | Likely cause | Recommended fix |
-|---|---|---|
-| `auth` | Token revoked or invalid | Run `/claude-code-status:slack-setup` to re-configure |
-| `dependency` | Token not configured | Run `/claude-code-status:slack-setup` |
-| `rate_limit` | Slack API rate limit exceeded | Wait 2 minutes, then retry |
-| `transient` | Temporary network error | Retry with force refresh |
-
-### 4. Force refresh
-
-```bash
-CLAUDE_PLUGIN_DATA="${CLAUDE_PLUGIN_DATA:-$HOME/.claude/plugins/data/claude-code-status-claude-code-status}"
-node "$CLAUDE_PLUGIN_DATA/runtime/dist/collect.js" --service slack --force 2>&1
-```
-
-Wait for the command to complete, then re-read the cache.
-
-### 5. If not configured
-
-If no cache file exists or `errorKind` is `dependency`:
-
-```
-Slack is not configured yet.
-Run /claude-code-status:slack-setup to connect your Slack workspace.
-```
-
 ## Notes
 
-- Cache TTL for Slack is **2 minutes**.
+- Data is pre-collected with details — no additional API calls needed.
 - Unread count = DM unread + configured channel unread.
-- To change monitored channels, run `/claude-code-status:slack-setup` again.
-
-## Deriving CLAUDE_PLUGIN_DATA
-
-If `$CLAUDE_PLUGIN_DATA` is not set, derive it:
-```bash
-CLAUDE_PLUGIN_DATA="$HOME/.claude/plugins/data/claude-code-status-claude-code-status"
-```
+- To change monitored channels, run `/claude-code-status:slack-setup`.
+- Cache TTL: **2 minutes**.

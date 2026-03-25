@@ -14,7 +14,7 @@
  */
 
 import { execSync } from 'child_process';
-import type { CollectorResult, ErrorKind } from '../types';
+import type { CollectorResult, CollectorItem, ErrorKind } from '../types';
 import { writeCacheFile } from '../coordinator';
 
 const SERVICE = 'github';
@@ -134,17 +134,45 @@ export async function collect(): Promise<void> {
     );
 
     // 4. Deduplicate by thread id (each thread = 1 PR notification)
-    const uniqueThreadIds = new Set<string>(unreadPrNotifications.map((n) => n.id));
-    const count = uniqueThreadIds.size;
+    const seen = new Set<string>();
+    const uniqueNotifications: GitHubNotification[] = [];
+    for (const n of unreadPrNotifications) {
+      if (!seen.has(n.id)) {
+        seen.add(n.id);
+        uniqueNotifications.push(n);
+      }
+    }
+
+    // 5. Build items with links
+    const items: CollectorItem[] = uniqueNotifications.map((n) => {
+      // Convert API URL to web URL: https://api.github.com/repos/owner/repo/pulls/123 -> https://github.com/owner/repo/pull/123
+      let link: string | null = null;
+      if (n.subject?.url) {
+        link = n.subject.url
+          .replace('api.github.com/repos', 'github.com')
+          .replace('/pulls/', '/pull/');
+      }
+
+      return {
+        title: n.subject?.title ?? 'Untitled PR',
+        link,
+        meta: {
+          repo: n.repository?.full_name ?? null,
+          reason: n.reason,
+          updated: n.updated_at,
+        },
+      };
+    });
 
     result = {
-      value: count,
+      value: uniqueNotifications.length,
       status: 'ok',
       fetchedAt: now,
       ttlMs: TTL_MS,
       errorKind: null,
       detail: null,
       source: SERVICE,
+      items,
     };
   } catch (err) {
     const { errorKind, detail } = classifyError(err);

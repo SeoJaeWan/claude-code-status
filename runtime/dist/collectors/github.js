@@ -87,16 +87,42 @@ async function collect() {
         // 3. Filter: unread PR notifications only
         const unreadPrNotifications = notifications.filter((n) => n.unread && n.subject?.type === 'PullRequest');
         // 4. Deduplicate by thread id (each thread = 1 PR notification)
-        const uniqueThreadIds = new Set(unreadPrNotifications.map((n) => n.id));
-        const count = uniqueThreadIds.size;
+        const seen = new Set();
+        const uniqueNotifications = [];
+        for (const n of unreadPrNotifications) {
+            if (!seen.has(n.id)) {
+                seen.add(n.id);
+                uniqueNotifications.push(n);
+            }
+        }
+        // 5. Build items with links
+        const items = uniqueNotifications.map((n) => {
+            // Convert API URL to web URL: https://api.github.com/repos/owner/repo/pulls/123 -> https://github.com/owner/repo/pull/123
+            let link = null;
+            if (n.subject?.url) {
+                link = n.subject.url
+                    .replace('api.github.com/repos', 'github.com')
+                    .replace('/pulls/', '/pull/');
+            }
+            return {
+                title: n.subject?.title ?? 'Untitled PR',
+                link,
+                meta: {
+                    repo: n.repository?.full_name ?? null,
+                    reason: n.reason,
+                    updated: n.updated_at,
+                },
+            };
+        });
         result = {
-            value: count,
+            value: uniqueNotifications.length,
             status: 'ok',
             fetchedAt: now,
             ttlMs: TTL_MS,
             errorKind: null,
             detail: null,
             source: SERVICE,
+            items,
         };
     }
     catch (err) {

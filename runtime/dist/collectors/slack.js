@@ -122,8 +122,8 @@ function httpsGet(url, token) {
 // ---------------------------------------------------------------------------
 // Slack API calls
 // ---------------------------------------------------------------------------
-async function fetchDmUnreadCounts(token) {
-    let total = 0;
+async function fetchDmUnreadDetails(token) {
+    const details = [];
     let cursor = '';
     do {
         const cursorParam = cursor ? `&cursor=${encodeURIComponent(cursor)}` : '';
@@ -140,13 +140,20 @@ async function fetchDmUnreadCounts(token) {
             throw new Error(parsed.error ?? 'Unknown Slack API error from conversations.list');
         }
         for (const channel of parsed.channels ?? []) {
-            total += channel.unread_count ?? 0;
+            const count = channel.unread_count ?? 0;
+            if (count > 0) {
+                details.push({
+                    name: channel.user ?? channel.name ?? channel.id,
+                    unreadCount: count,
+                    type: 'dm',
+                });
+            }
         }
         cursor = parsed.response_metadata?.next_cursor ?? '';
     } while (cursor);
-    return total;
+    return details;
 }
-async function fetchChannelUnreadCount(token, channelId) {
+async function fetchChannelUnreadDetail(token, channelId) {
     const url = `${API_BASE}/conversations.info?channel=${encodeURIComponent(channelId)}`;
     const raw = await httpsGet(url, token);
     let parsed;
@@ -159,26 +166,42 @@ async function fetchChannelUnreadCount(token, channelId) {
     if (!parsed.ok) {
         throw new Error(parsed.error ?? `Unknown Slack API error from conversations.info for channel ${channelId}`);
     }
-    return parsed.channel?.unread_count ?? 0;
+    const count = parsed.channel?.unread_count ?? 0;
+    return {
+        name: parsed.channel?.name ?? channelId,
+        unreadCount: count,
+        type: 'channel',
+    };
 }
-// ---------------------------------------------------------------------------
-// Main fetch
-// ---------------------------------------------------------------------------
-async function fetchUnreadCount() {
+async function fetchUnreadDetails() {
     const slackConfig = readSlackConfig();
     if (!slackConfig.token) {
         throw new Error('Slack token not configured. Add slack.token to config.json.');
     }
     const token = slackConfig.token;
     const channelIds = slackConfig.channels ?? [];
-    // Fetch DM + MPIM unread counts
-    const dmCount = await fetchDmUnreadCounts(token);
-    // Fetch configured channel unread counts
-    let channelCount = 0;
+    // Fetch DM + MPIM unread details
+    const dmDetails = await fetchDmUnreadDetails(token);
+    // Fetch configured channel unread details
+    const channelDetails = [];
     for (const channelId of channelIds) {
-        channelCount += await fetchChannelUnreadCount(token, channelId);
+        const detail = await fetchChannelUnreadDetail(token, channelId);
+        if (detail)
+            channelDetails.push(detail);
     }
-    return dmCount + channelCount;
+    const allDetails = [...dmDetails, ...channelDetails];
+    const total = allDetails.reduce((sum, d) => sum + d.unreadCount, 0);
+    const items = allDetails
+        .filter(d => d.unreadCount > 0)
+        .map(d => ({
+        title: d.type === 'dm' ? `@${d.name}` : `#${d.name}`,
+        link: null,
+        meta: {
+            unread: d.unreadCount,
+            type: d.type,
+        },
+    }));
+    return { total, items };
 }
 // ---------------------------------------------------------------------------
 // Main collect function
@@ -187,15 +210,16 @@ async function collect() {
     const now = new Date().toISOString();
     let result;
     try {
-        const count = await fetchUnreadCount();
+        const { total, items } = await fetchUnreadDetails();
         result = {
-            value: count,
+            value: total,
             status: 'ok',
             fetchedAt: now,
             ttlMs: TTL_MS,
             errorKind: null,
             detail: null,
             source: SERVICE,
+            items,
         };
     }
     catch (err) {

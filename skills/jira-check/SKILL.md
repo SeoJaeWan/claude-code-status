@@ -1,11 +1,11 @@
 ---
 name: jira-check
-description: Show cached Jira open issue count, diagnose errors, guide authentication, and optionally force a fresh fetch. Use when status line shows jira count or error.
+description: Show cached Jira open issue details, diagnose errors, guide authentication, and optionally force a fresh fetch. Use when status line shows jira count or error.
 user-invocable: true
 allowed-tools: "Read, Bash"
 ---
 
-Show cached Jira issue details and optionally force a fresh fetch.
+Show Jira open issue details from cache.
 
 ## When to use
 
@@ -18,110 +18,60 @@ Show cached Jira issue details and optionally force a fresh fetch.
 ### 1. Read the cache file
 
 ```bash
+CLAUDE_PLUGIN_DATA="${CLAUDE_PLUGIN_DATA:-$HOME/.claude/plugins/data/claude-code-status-claude-code-status}"
 cat "$CLAUDE_PLUGIN_DATA/cache/jira.json"
 ```
 
-Parse the JSON and inspect the fields:
+Parse the JSON. The `items` array contains the detailed issue list.
 
-| Field | Meaning |
+### 2. If `status` is `ok` — display the items
+
+The `items` array contains objects with:
+
+| Field | Example |
 |---|---|
-| `status` | `ok` / `error` / `stale` / `pending` |
-| `value` | Open assigned issue count (null if unavailable) |
-| `fetchedAt` | ISO 8601 timestamp of last successful fetch |
-| `ttlMs` | Cache TTL in milliseconds (300000 = 5 min) |
-| `errorKind` | `auth` / `dependency` / `rate_limit` / `transient` / `unknown` |
-| `detail` | Human-readable error description |
+| `title` | `시스템 알림과 SMS 알림 통합` |
+| `link` | `https://yourorg.atlassian.net/browse/WEB-434` |
+| `meta.key` | `WEB-434` |
+| `meta.priority` | `Medium` |
+| `meta.status` | `진행 중` |
 
-### 2. If `status` is `ok` — show issue details
-
-The cache stores the count only.  To see the actual issue list, run a force
-refresh which queries Jira and prints full details:
-
-```bash
-node "$CLAUDE_PLUGIN_DATA/runtime/dist/collect.js" --service jira --force
-```
-
-Then re-read the cache and display issues matching the JQL
-`assignee = currentUser() AND statusCategory != Done`:
-
-- **Issue key** (e.g. `PROJ-123`)
-- **Summary**
-- **Priority**
-- **Status**
-- **Updated** (ISO 8601 timestamp)
-- **Link** (Jira web URL)
-
-Present the results as a table or numbered list, sorted by updated date
-(most recently updated first).
+Present as a numbered list or table. Include the `link` for each issue.
 
 ### 3. If `status` is `error` — show error cause
 
-Read `errorKind` and `detail` from the cache and explain what went wrong:
-
 | `errorKind` | Likely cause | Recommended fix |
 |---|---|---|
-| `auth` | Not logged in to Jira via `acli` | Run `acli jira auth login --web` |
+| `auth` | Not logged in to Jira | Run `acli jira auth login --web` |
 | `dependency` | `acli` CLI not installed | Install from https://acli.atlassian.com |
 | `rate_limit` | Jira API quota exceeded | Wait a few minutes, then retry |
-| `transient` | Temporary network error | Retry with `--force` |
-| `unknown` | Unexpected error | See `detail` field for raw error message |
+| `transient` | Temporary network error | Force refresh |
 
-### 4. Force refresh
-
-```bash
-node "$CLAUDE_PLUGIN_DATA/runtime/dist/collect.js" --service jira --force
-```
-
-Wait for the command to complete, then re-read the cache.
-
-### 5. If not authenticated
-
-Check `acli` login status:
+### 4. Force refresh (if user requests)
 
 ```bash
-acli jira auth status
+CLAUDE_PLUGIN_DATA="${CLAUDE_PLUGIN_DATA:-$HOME/.claude/plugins/data/claude-code-status-claude-code-status}"
+rm -f "$CLAUDE_PLUGIN_DATA/locks/jira.lock"
+node "$CLAUDE_PLUGIN_DATA/runtime/dist/collect.js" --service jira --force 2>&1
+cat "$CLAUDE_PLUGIN_DATA/cache/jira.json"
 ```
 
-If not logged in:
+Then display the updated items.
 
-```bash
-acli jira auth login --web
-```
-
-This opens a browser window to complete the Atlassian OAuth flow.  After
-completing the flow, run a force refresh to confirm the fix:
-
-```bash
-node "$CLAUDE_PLUGIN_DATA/runtime/dist/collect.js" --service jira --force
-```
-
-## Example output (status ok)
+## Example output
 
 ```
-Jira open issues: 5   (last updated: 2026-03-24T10:15:00Z)
+Jira 미완료 이슈: 4건   (last updated: 2026-03-25T04:26:46Z)
 
- 1. PROJ-101  Fix login timeout bug           Priority: High    Status: In Progress  Updated: 2026-03-24T09:00:00Z
-    Link: https://yourorg.atlassian.net/browse/PROJ-101
+ 1. WEB-434  시스템 알림과 SMS 알림 통합     Priority: Medium  Status: 진행 중
+    https://yourorg.atlassian.net/browse/WEB-434
 
- 2. PROJ-98   Add dark mode support           Priority: Medium  Status: To Do        Updated: 2026-03-23T14:30:00Z
-    Link: https://yourorg.atlassian.net/browse/PROJ-98
-
-...
-```
-
-## Example output (status error — auth)
-
-```
-Jira status: ERROR
-Error kind:   auth
-Detail:       acli: not authenticated. Run `acli jira auth login --web` to log in.
-
-Fix: Run `acli jira auth login --web` then retry with:
-     node "$CLAUDE_PLUGIN_DATA/runtime/dist/collect.js" --service jira --force
+ 2. WEB-287  기기 복귀 시 알림               Priority: Medium  Status: 해야 할 일
+    https://yourorg.atlassian.net/browse/WEB-287
 ```
 
 ## Notes
 
-- The JQL query used is: `assignee = currentUser() AND statusCategory != Done`
-- Issues move out of the count when they are marked Done or reassigned.
-- Cache TTL for Jira is **5 minutes**.
+- Data is pre-collected with details — no additional API calls needed.
+- JQL: `assignee = currentUser() AND statusCategory != Done`
+- Cache TTL: **1 minute**.

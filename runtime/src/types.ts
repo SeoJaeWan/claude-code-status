@@ -62,6 +62,18 @@ export interface CollectorResult {
   detail: string | null;
   /** Data source identifier (service name, e.g. 'gmail', 'github'). */
   source: string;
+  /** Detailed item list for -check skills; null when unavailable or error. */
+  items?: CollectorItem[] | null;
+}
+
+/** A single item in the collector's detailed list. */
+export interface CollectorItem {
+  /** Display title or summary. */
+  title: string;
+  /** Link to the item (web URL). */
+  link?: string | null;
+  /** Additional metadata (service-specific). */
+  meta?: Record<string, string | number | null>;
 }
 
 // ---------------------------------------------------------------------------

@@ -14,7 +14,7 @@
  */
 
 import { exec } from 'child_process';
-import type { CollectorResult, ErrorKind } from '../types';
+import type { CollectorResult, CollectorItem, ErrorKind } from '../types';
 import { writeCacheFile } from '../coordinator';
 
 const SERVICE = 'tasks';
@@ -121,7 +121,12 @@ async function fetchTaskLists(): Promise<TaskList[]> {
 // Fetch needsAction tasks for a single task list
 // ---------------------------------------------------------------------------
 
-async function fetchNeedsActionCount(taskListId: string): Promise<number> {
+interface TaskWithList {
+  task: Task;
+  listTitle: string;
+}
+
+async function fetchNeedsActionTasks(taskListId: string): Promise<Task[]> {
   const params = JSON.stringify({
     tasklist: taskListId,
     showCompleted: false,
@@ -149,7 +154,7 @@ async function fetchNeedsActionCount(taskListId: string): Promise<number> {
   }
 
   const items = parsed.items ?? [];
-  return items.filter((t) => t.status === 'needsAction').length;
+  return items.filter((t) => t.status === 'needsAction');
 }
 
 // ---------------------------------------------------------------------------
@@ -164,20 +169,32 @@ export async function collect(): Promise<void> {
   try {
     const taskLists = await fetchTaskLists();
 
-    let totalCount = 0;
+    const allTasks: TaskWithList[] = [];
     for (const list of taskLists) {
-      const count = await fetchNeedsActionCount(list.id);
-      totalCount += count;
+      const tasks = await fetchNeedsActionTasks(list.id);
+      for (const task of tasks) {
+        allTasks.push({ task, listTitle: list.title });
+      }
     }
 
+    const items: CollectorItem[] = allTasks.map(({ task, listTitle }) => ({
+      title: task.title ?? '(untitled)',
+      link: 'https://tasks.google.com',
+      meta: {
+        list: listTitle,
+        due: task.due ?? null,
+      },
+    }));
+
     result = {
-      value: totalCount,
+      value: allTasks.length,
       status: 'ok',
       fetchedAt: now,
       ttlMs: TTL_MS,
       errorKind: null,
       detail: null,
       source: SERVICE,
+      items,
     };
   } catch (err) {
     const exitCode = err && typeof err === 'object' && 'exitCode' in err
