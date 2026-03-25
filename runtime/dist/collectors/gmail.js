@@ -44,7 +44,7 @@ function classifyError(err, exitCode) {
 function runGws(args) {
     const escaped = args.map(a => `"${a.replace(/"/g, '\\"')}"`).join(' ');
     return new Promise((resolve) => {
-        (0, child_process_1.exec)(`gws ${escaped}`, { timeout: 15000 }, (err, stdout, stderr) => {
+        (0, child_process_1.exec)(`gws ${escaped}`, { timeout: 15000, windowsHide: true }, (err, stdout, stderr) => {
             const exitCode = err && 'code' in err ? err.code : 0;
             resolve({ stdout: stdout ?? '', stderr: stderr ?? '', exitCode });
         });

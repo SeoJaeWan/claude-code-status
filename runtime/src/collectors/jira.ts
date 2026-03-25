@@ -54,7 +54,7 @@ function classifyError(err: unknown): { errorKind: ErrorKind; detail: string } {
 
 function checkAcliAuth(): void {
   try {
-    execSync('acli jira --help', { stdio: 'pipe', timeout: 10_000 });
+    execSync('acli jira --help', { stdio: 'pipe', timeout: 10_000, windowsHide: true });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     if (/command not found|executable file not found|ENOENT/i.test(msg)) {
@@ -72,7 +72,7 @@ function fetchIssueCount(): number {
   try {
     raw = execSync(
       `acli jira workitem search --jql "${JQL.replace(/"/g, '\\"')}" --count`,
-      { encoding: 'utf8', timeout: 30_000, stdio: ['pipe', 'pipe', 'pipe'] },
+      { encoding: 'utf8', timeout: 30_000, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true },
     );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

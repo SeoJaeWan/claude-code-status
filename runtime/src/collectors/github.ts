@@ -81,7 +81,7 @@ function classifyError(err: unknown): { errorKind: ErrorKind; detail: string } {
 
 function checkGhAuth(): void {
   try {
-    execSync('gh auth status', { stdio: 'pipe', timeout: 10_000 });
+    execSync('gh auth status', { stdio: 'pipe', timeout: 10_000, windowsHide: true });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     // Distinguish between CLI not installed vs not authenticated
@@ -102,7 +102,7 @@ function fetchNotifications(): GitHubNotification[] {
   // Fetch up to 100 unread notifications
   const raw = execSync(
     'gh api /notifications -H "Accept: application/vnd.github+json"',
-    { encoding: 'utf8', timeout: 30_000, stdio: ['pipe', 'pipe', 'pipe'] },
+    { encoding: 'utf8', timeout: 30_000, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true },
   );
 
   const data = JSON.parse(raw) as unknown;

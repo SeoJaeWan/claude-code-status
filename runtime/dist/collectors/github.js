@@ -48,7 +48,7 @@ function classifyError(err) {
 // ---------------------------------------------------------------------------
 function checkGhAuth() {
     try {
-        (0, child_process_1.execSync)('gh auth status', { stdio: 'pipe', timeout: 10000 });
+        (0, child_process_1.execSync)('gh auth status', { stdio: 'pipe', timeout: 10000, windowsHide: true });
     }
     catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -66,7 +66,7 @@ function checkGhAuth() {
 // ---------------------------------------------------------------------------
 function fetchNotifications() {
     // Fetch up to 100 unread notifications
-    const raw = (0, child_process_1.execSync)('gh api /notifications -H "Accept: application/vnd.github+json"', { encoding: 'utf8', timeout: 30000, stdio: ['pipe', 'pipe', 'pipe'] });
+    const raw = (0, child_process_1.execSync)('gh api /notifications -H "Accept: application/vnd.github+json"', { encoding: 'utf8', timeout: 30000, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
     const data = JSON.parse(raw);
     if (!Array.isArray(data)) {
         throw new Error('Unexpected response format from GitHub Notifications API');

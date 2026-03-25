@@ -44,7 +44,7 @@ function classifyError(err) {
 // ---------------------------------------------------------------------------
 function checkAcliAuth() {
     try {
-        (0, child_process_1.execSync)('acli jira --help', { stdio: 'pipe', timeout: 10000 });
+        (0, child_process_1.execSync)('acli jira --help', { stdio: 'pipe', timeout: 10000, windowsHide: true });
     }
     catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -59,7 +59,7 @@ function checkAcliAuth() {
 function fetchIssueCount() {
     let raw;
     try {
-        raw = (0, child_process_1.execSync)(`acli jira workitem search --jql "${JQL.replace(/"/g, '\\"')}" --count`, { encoding: 'utf8', timeout: 30000, stdio: ['pipe', 'pipe', 'pipe'] });
+        raw = (0, child_process_1.execSync)(`acli jira workitem search --jql "${JQL.replace(/"/g, '\\"')}" --count`, { encoding: 'utf8', timeout: 30000, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
     }
     catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
