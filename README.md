@@ -45,7 +45,7 @@ The default Claude Code status line shows almost nothing. You don't know:
 
 Context switching to check each service breaks your flow. This plugin puts everything in one line at the bottom of your terminal — always visible, never in the way.
 
-Services you haven't connected are **automatically hidden**. Start with just the usage percentages, add services when you need them.
+Services you haven't connected are **automatically hidden**. You can also **toggle visibility** of connected services with `/claude-code-status:toggle-service`. Start with just the usage percentages, add services when you need them.
 
 ---
 
@@ -173,6 +173,7 @@ Each failed check includes the exact command to fix it.
 | `/claude-code-status:tasks-check`     | Google Tasks details / force refresh                                   |
 | `/claude-code-status:jira-check`      | Jira issue details / force refresh                                     |
 | `/claude-code-status:github-check`    | GitHub PR notification details / force refresh                         |
+| `/claude-code-status:toggle-service`  | Show/hide a service from the status line (e.g. `gmail off`)            |
 
 ---
 
@@ -198,10 +199,9 @@ Each failed check includes the exact command to fix it.
 
 ### Cache TTL
 
-| Service              | TTL        |
-| -------------------- | ---------- |
-| github               | 90 seconds |
-| gmail / tasks / jira | 5 minutes  |
+| Service                        | TTL      |
+| ------------------------------ | -------- |
+| gmail / tasks / jira / github  | 1 minute |
 
 ---
 
@@ -230,6 +230,7 @@ $CLAUDE_PLUGIN_DATA/
         gmail.js, tasks.js, jira.js, github.js
       coordinator.js          <- Lock / stale / background refresh
       cache.js                <- Cache read helpers
+  config.json                 <- Service visibility settings (toggle on/off)
   cache/
     <service>.json            <- Cached data per service
   locks/

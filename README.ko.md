@@ -45,7 +45,7 @@ week 3% session 22% | gmail 7 | tasks 3 | jira 5 | github 4
 
 각 서비스를 확인하러 컨텍스트 스위칭하면 작업 흐름이 끊깁니다. 이 플러그인은 터미널 하단 한 줄에 모든 것을 표시합니다 — 항상 보이지만 방해되지 않습니다.
 
-연동하지 않은 서비스는 **자동으로 숨겨집니다**. 사용률 퍼센트만으로 시작하고, 필요할 때 서비스를 추가하세요.
+연동하지 않은 서비스는 **자동으로 숨겨집니다**. `/claude-code-status:toggle-service`로 연동된 서비스의 **표시 여부를 토글**할 수도 있습니다. 사용률 퍼센트만으로 시작하고, 필요할 때 서비스를 추가하세요.
 
 ---
 
@@ -173,6 +173,7 @@ gh auth login
 | `/claude-code-status:tasks-check`     | Google Tasks 상세 확인 / 강제 새로고침                                   |
 | `/claude-code-status:jira-check`      | Jira 이슈 상세 확인 / 강제 새로고침                                      |
 | `/claude-code-status:github-check`    | GitHub PR 알림 상세 확인 / 강제 새로고침                                 |
+| `/claude-code-status:toggle-service`  | 상태 표시줄에서 서비스 표시/숨김 (예: `gmail off`)                        |
 
 ---
 
@@ -198,10 +199,9 @@ gh auth login
 
 ### 캐시 TTL
 
-| 서비스               | TTL  |
-| -------------------- | ---- |
-| github               | 90초 |
-| gmail / tasks / jira | 5분  |
+| 서비스                         | TTL |
+| ------------------------------ | --- |
+| gmail / tasks / jira / github  | 1분 |
 
 ---
 
@@ -230,6 +230,7 @@ $CLAUDE_PLUGIN_DATA/
         gmail.js, tasks.js, jira.js, github.js
       coordinator.js          <- lock / stale / 백그라운드 갱신
       cache.js                <- 캐시 읽기 헬퍼
+  config.json                 <- 서비스 표시 설정 (토글 on/off)
   cache/
     <service>.json            <- 각 서비스 캐시 데이터
   locks/
