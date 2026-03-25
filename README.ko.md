@@ -88,7 +88,7 @@ week 3% session 22% | gmail 7 | tasks 3 | jira 5 | github 4 | slack 5
 
 | 서비스        | CLI / API                                                     | 설치                                                                                 |
 | ------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Gmail / Tasks | [Google Workspace CLI](https://github.com/nicholasgasior/gws) | `npm install -g @nicholasgasior/gws`                                                 |
+| Gmail / Tasks | [Google Workspace CLI](https://github.com/nicholasgasior/gws) | `npm install -g @googleworkspace/cli`                                                 |
 | Jira          | [Atlassian CLI](https://developer.atlassian.com/cloud/acli/)  | [바이너리 다운로드](https://developer.atlassian.com/cloud/acli/guides/install-acli/) |
 | GitHub        | [GitHub CLI](https://cli.github.com)                          | `winget install GitHub.cli` / `brew install gh`                                      |
 | Slack         | [Slack API](https://api.slack.com/apps) (User OAuth Token)    | `/claude-code-status:slack-setup` 실행                                               |
@@ -122,7 +122,7 @@ Claude Code 대화창에서 아래 명령어를 실행합니다.
 <summary><b>Gmail & Google Tasks</b></summary>
 
 ```bash
-npm install -g @nicholasgasior/gws   # Google Workspace CLI 설치
+npm install -g @googleworkspace/cli   # Google Workspace CLI 설치
 gws auth setup                        # Cloud 프로젝트 생성 및 API 활성화
 gws auth login                        # 브라우저에서 OAuth 동의
 ```
