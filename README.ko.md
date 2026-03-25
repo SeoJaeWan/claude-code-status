@@ -23,7 +23,8 @@ Claude 사용량, Gmail, Tasks, Jira, GitHub — 한 줄로 모두 확인.
 
 <p><a href="README.md">English</a></p>
 
-<img width="678" height="331" alt="image" src="https://github.com/user-attachments/assets/f5aac8b8-e59c-499b-a887-8b1101f98407" />
+<img width="874" height="285" alt="image" src="https://github.com/user-attachments/assets/e8ea4086-039b-47e4-b985-bacfd7aeeed8" />
+
 
 </div>
 
