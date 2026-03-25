@@ -21,6 +21,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const cache_1 = require("./cache");
 const coordinator_1 = require("./coordinator");
+const config_1 = require("./config");
 // ---------------------------------------------------------------------------
 // ANSI color helpers
 // ---------------------------------------------------------------------------
@@ -169,6 +170,9 @@ function resultToColoredDisplay(service, result) {
     return applyServiceColor(service, result.value, numStr);
 }
 function renderService(service) {
+    // Skip services the user has disabled in config.json
+    if (!(0, config_1.isServiceEnabled)(service))
+        return null;
     const result = (0, cache_1.readCache)(service);
     // Trigger a background refresh if the cache is stale.
     // triggerRefreshIfStale is non-blocking — it spawns a detached child process

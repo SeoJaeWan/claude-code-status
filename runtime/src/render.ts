@@ -20,6 +20,7 @@
 
 import { readCache, isFresh } from './cache';
 import { triggerRefreshIfStale } from './coordinator';
+import { isServiceEnabled } from './config';
 import type {
   StatusLineInput,
   ServiceName,
@@ -186,6 +187,9 @@ function resultToColoredDisplay(service: ExternalService, result: CollectorResul
 }
 
 function renderService(service: ExternalService): string | null {
+  // Skip services the user has disabled in config.json
+  if (!isServiceEnabled(service)) return null;
+
   const result = readCache(service);
 
   // Trigger a background refresh if the cache is stale.
