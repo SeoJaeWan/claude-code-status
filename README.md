@@ -88,7 +88,7 @@ External service CLIs are **optional** — install only what you need:
 
 | Service       | CLI / API                                                     | Install                                                                            |
 | ------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Gmail / Tasks | [Google Workspace CLI](https://github.com/nicholasgasior/gws) | `npm install -g @nicholasgasior/gws`                                               |
+| Gmail / Tasks | [Google Workspace CLI](https://github.com/nicholasgasior/gws) | `npm install -g @googleworkspace/cli`                                               |
 | Jira          | [Atlassian CLI](https://developer.atlassian.com/cloud/acli/)  | [Download binary](https://developer.atlassian.com/cloud/acli/guides/install-acli/) |
 | GitHub        | [GitHub CLI](https://cli.github.com)                          | `winget install GitHub.cli` / `brew install gh`                                    |
 | Slack         | [Slack API](https://api.slack.com/apps) (User OAuth Token)    | Run `/claude-code-status:slack-setup`                                              |
