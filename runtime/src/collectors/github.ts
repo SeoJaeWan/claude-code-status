@@ -101,7 +101,7 @@ function checkGhAuth(): void {
 function fetchNotifications(): GitHubNotification[] {
   // Fetch up to 100 unread notifications
   const raw = execSync(
-    'gh api /notifications --jq \'.\'  -H "Accept: application/vnd.github+json"',
+    'gh api /notifications -H "Accept: application/vnd.github+json"',
     { encoding: 'utf8', timeout: 30_000, stdio: ['pipe', 'pipe', 'pipe'] },
   );
 

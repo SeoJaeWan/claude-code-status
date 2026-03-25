@@ -95,6 +95,11 @@ if [[ ! -f "$RENDER_SCRIPT" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
+# Export PLUGIN_DATA so node render.js can find cache/locks directories
+# ---------------------------------------------------------------------------
+export CLAUDE_PLUGIN_DATA="$PLUGIN_DATA"
+
+# ---------------------------------------------------------------------------
 # Invoke node render.js, piping stdin through
 # ---------------------------------------------------------------------------
 OUTPUT=""

@@ -12,7 +12,7 @@
             "name": "claude-code-status",
             "source": "./",
             "description": "Displays counts from external services (week/session usage, gmail, tasks, jira, github) in Claude Code's status line.",
-            "version": "0.1.0",
+            "version": "1.0.0",
             "keywords": ["statusline", "gmail", "tasks", "jira", "github", "productivity"],
             "category": "productivity"
         }
