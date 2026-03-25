@@ -81,7 +81,6 @@ if [[ -d "$SRC_RUNTIME" ]]; then
     if command -v rsync &>/dev/null; then
       rsync -a --delete \
         --exclude 'node_modules' \
-        --exclude 'dist' \
         "$SRC_RUNTIME/" "$RUNTIME_DIR/"
     else
       # Fallback: cp -r (less precise but widely available)
@@ -128,18 +127,7 @@ if [[ -f "$RUNTIME_PKG" ]]; then
     fi
   fi
 
-  # Build TypeScript if dist is missing or version changed
-  DIST_DIR="$RUNTIME_DIR/dist"
-  if [[ ! -d "$DIST_DIR" ]] || [[ "$VERSION_CHANGED" == "true" ]]; then
-    log "Building TypeScript runtime"
-    if [[ -d "$RUNTIME_DIR/node_modules" ]]; then
-      (cd "$RUNTIME_DIR" && npm run build --silent 2>>"$LOG_DIR/tsc-build.log") && \
-        log "TypeScript build complete" || \
-        log "WARNING: TypeScript build failed. See $LOG_DIR/tsc-build.log"
-    else
-      log "WARNING: node_modules not present. Skipping TypeScript build."
-    fi
-  fi
+  # dist/ is shipped pre-built in the plugin — no TypeScript build needed
 fi
 
 # ---------------------------------------------------------------------------
