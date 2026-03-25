@@ -62,7 +62,7 @@ interface SlackConversationsListResponse {
 
 interface SlackConversationsInfoResponse {
   ok: boolean;
-  channel?: SlackChannel & { name?: string };
+  channel?: SlackChannel & { name?: string; mention_count?: number };
   error?: string;
 }
 
@@ -204,7 +204,7 @@ async function fetchChannelUnreadDetail(token: string, channelId: string): Promi
     throw new Error(parsed.error ?? `Unknown Slack API error from conversations.info for channel ${channelId}`);
   }
 
-  const count = parsed.channel?.unread_count ?? 0;
+  const count = parsed.channel?.mention_count ?? 0;
   return {
     name: parsed.channel?.name ?? channelId,
     unreadCount: count,

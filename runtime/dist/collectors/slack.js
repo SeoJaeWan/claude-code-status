@@ -166,7 +166,7 @@ async function fetchChannelUnreadDetail(token, channelId) {
     if (!parsed.ok) {
         throw new Error(parsed.error ?? `Unknown Slack API error from conversations.info for channel ${channelId}`);
     }
-    const count = parsed.channel?.unread_count ?? 0;
+    const count = parsed.channel?.mention_count ?? 0;
     return {
         name: parsed.channel?.name ?? channelId,
         unreadCount: count,
