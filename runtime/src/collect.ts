@@ -6,7 +6,7 @@
  * Usage:
  *   node collect.js --service <name> [--force]
  *
- * Services: github | jira | gmail | tasks
+ * Services: github | jira | gmail | tasks | slack
  *
  * Flags:
  *   --service <name>  Required. The service to collect data for.
@@ -32,9 +32,9 @@ import type { ServiceName } from './types';
 // week/session are derived from stdin, not collected via this CLI.
 // ---------------------------------------------------------------------------
 
-type CollectableService = Extract<ServiceName, 'github' | 'jira' | 'gmail' | 'tasks'>;
+type CollectableService = Extract<ServiceName, 'github' | 'jira' | 'gmail' | 'tasks' | 'slack'>;
 
-const SUPPORTED_SERVICES: CollectableService[] = ['github', 'jira', 'gmail', 'tasks'];
+const SUPPORTED_SERVICES: CollectableService[] = ['github', 'jira', 'gmail', 'tasks', 'slack'];
 
 function isSupportedService(name: string): name is CollectableService {
   return (SUPPORTED_SERVICES as string[]).includes(name);
@@ -54,6 +54,8 @@ async function loadCollector(service: CollectableService): Promise<{ collect: ()
       return import('./collectors/gmail');
     case 'tasks':
       return import('./collectors/tasks');
+    case 'slack':
+      return import('./collectors/slack');
     default: {
       // TypeScript exhaustiveness guard
       const _exhaustive: never = service;

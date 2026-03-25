@@ -68,7 +68,7 @@ export interface CollectorResult {
 // Renderer internal types
 // ---------------------------------------------------------------------------
 
-export type ServiceName = 'week' | 'session' | 'gmail' | 'tasks' | 'jira' | 'github';
+export type ServiceName = 'week' | 'session' | 'gmail' | 'tasks' | 'jira' | 'github' | 'slack';
 
 /** Rendered segment for one service. */
 export interface ServiceSegment {

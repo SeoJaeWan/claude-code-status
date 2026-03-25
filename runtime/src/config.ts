@@ -20,6 +20,7 @@ export interface ServiceVisibility {
   tasks?: boolean;
   jira?: boolean;
   github?: boolean;
+  slack?: boolean;
 }
 
 export interface PluginConfig {

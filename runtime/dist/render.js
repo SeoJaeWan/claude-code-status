@@ -86,12 +86,22 @@ function colorGithub(count, text) {
         return yellow(text);
     return white(text);
 }
+function colorSlack(count, text) {
+    if (count === 0)
+        return gray(text);
+    if (count >= 30)
+        return red(text);
+    if (count >= 10)
+        return yellow(text);
+    return white(text);
+}
 function applyServiceColor(service, count, text) {
     switch (service) {
         case 'gmail': return colorGmail(count, text);
         case 'tasks': return colorTasks(count, text);
         case 'jira': return colorJira(count, text);
         case 'github': return colorGithub(count, text);
+        case 'slack': return colorSlack(count, text);
     }
 }
 // ---------------------------------------------------------------------------
@@ -207,7 +217,7 @@ function formatStatusLine(weekSession, serviceSegments) {
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
-const SERVICES = ['gmail', 'tasks', 'jira', 'github'];
+const SERVICES = ['gmail', 'tasks', 'jira', 'github', 'slack'];
 async function main() {
     try {
         const rawStdin = await readStdin();

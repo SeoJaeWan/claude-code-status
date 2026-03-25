@@ -85,7 +85,14 @@ function colorGithub(count: number, text: string): string {
   return white(text);
 }
 
-type ExternalService = Extract<ServiceName, 'gmail' | 'tasks' | 'jira' | 'github'>;
+function colorSlack(count: number, text: string): string {
+  if (count === 0)  return gray(text);
+  if (count >= 30)  return red(text);
+  if (count >= 10)  return yellow(text);
+  return white(text);
+}
+
+type ExternalService = Extract<ServiceName, 'gmail' | 'tasks' | 'jira' | 'github' | 'slack'>;
 
 function applyServiceColor(service: ExternalService, count: number, text: string): string {
   switch (service) {
@@ -93,6 +100,7 @@ function applyServiceColor(service: ExternalService, count: number, text: string
     case 'tasks':  return colorTasks(count, text);
     case 'jira':   return colorJira(count, text);
     case 'github': return colorGithub(count, text);
+    case 'slack':  return colorSlack(count, text);
   }
 }
 
@@ -236,7 +244,7 @@ function formatStatusLine(
 // Main
 // ---------------------------------------------------------------------------
 
-const SERVICES: ExternalService[] = ['gmail', 'tasks', 'jira', 'github'];
+const SERVICES: ExternalService[] = ['gmail', 'tasks', 'jira', 'github', 'slack'];
 
 async function main(): Promise<void> {
   try {

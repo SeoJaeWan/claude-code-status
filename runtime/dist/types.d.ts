@@ -44,7 +44,7 @@ export interface CollectorResult {
     /** Data source identifier (service name, e.g. 'gmail', 'github'). */
     source: string;
 }
-export type ServiceName = 'week' | 'session' | 'gmail' | 'tasks' | 'jira' | 'github';
+export type ServiceName = 'week' | 'session' | 'gmail' | 'tasks' | 'jira' | 'github' | 'slack';
 /** Rendered segment for one service. */
 export interface ServiceSegment {
     name: ServiceName;

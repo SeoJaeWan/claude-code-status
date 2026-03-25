@@ -7,7 +7,7 @@
  * Usage:
  *   node collect.js --service <name> [--force]
  *
- * Services: github | jira | gmail | tasks
+ * Services: github | jira | gmail | tasks | slack
  *
  * Flags:
  *   --service <name>  Required. The service to collect data for.
@@ -59,7 +59,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const coordinator_1 = require("./coordinator");
-const SUPPORTED_SERVICES = ['github', 'jira', 'gmail', 'tasks'];
+const SUPPORTED_SERVICES = ['github', 'jira', 'gmail', 'tasks', 'slack'];
 function isSupportedService(name) {
     return SUPPORTED_SERVICES.includes(name);
 }
@@ -76,6 +76,8 @@ async function loadCollector(service) {
             return Promise.resolve().then(() => __importStar(require('./collectors/gmail')));
         case 'tasks':
             return Promise.resolve().then(() => __importStar(require('./collectors/tasks')));
+        case 'slack':
+            return Promise.resolve().then(() => __importStar(require('./collectors/slack')));
         default: {
             // TypeScript exhaustiveness guard
             const _exhaustive = service;

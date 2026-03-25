@@ -6,7 +6,7 @@
  * Usage:
  *   node collect.js --service <name> [--force]
  *
- * Services: github | jira | gmail | tasks
+ * Services: github | jira | gmail | tasks | slack
  *
  * Flags:
  *   --service <name>  Required. The service to collect data for.

@@ -4,7 +4,7 @@
 
 **Claude Code 터미널에 나의 업무 대시보드를 추가하는 플러그인**
 
-Claude 사용량, Gmail, Tasks, Jira, GitHub — 한 줄로 모두 확인.
+Claude 사용량, Gmail, Tasks, Jira, GitHub, Slack — 한 줄로 모두 확인.
 
 <p>
   <a href="#튜토리얼">설치</a> &middot;
@@ -29,7 +29,7 @@ Claude 사용량, Gmail, Tasks, Jira, GitHub — 한 줄로 모두 확인.
 </div>
 
 ```
-week 3% session 22% | gmail 7 | tasks 3 | jira 5 | github 4
+week 3% session 22% | gmail 7 | tasks 3 | jira 5 | github 4 | slack 5
 ```
 
 ---
@@ -42,6 +42,7 @@ week 3% session 22% | gmail 7 | tasks 3 | jira 5 | github 4
 - **읽지 않은 메일이 얼마나 쌓였는지** — 코딩에 몰입하는 동안 놓칩니다
 - **Jira 티켓이 몇 개 대기 중인지** — 확인하려면 브라우저를 열어야 합니다
 - **PR 리뷰가 들어왔는지** — GitHub에 들어가봐야 압니다
+- **Slack 메시지가 몇 개 쌓였는지** — Slack을 열어봐야 압니다
 
 각 서비스를 확인하러 컨텍스트 스위칭하면 작업 흐름이 끊깁니다. 이 플러그인은 터미널 하단 한 줄에 모든 것을 표시합니다 — 항상 보이지만 방해되지 않습니다.
 
@@ -59,6 +60,7 @@ week 3% session 22% | gmail 7 | tasks 3 | jira 5 | github 4
 | `tasks 3`     | Google Tasks API      | 미완료 할 일                   |
 | `jira 5`      | Jira API              | 본인에게 할당된 미완료 이슈    |
 | `github 4`    | GitHub API            | 읽지 않은 PR 알림              |
+| `slack 5`     | Slack API             | 읽지 않은 DM + 모니터링 채널   |
 
 ### 색상 규칙
 
@@ -71,6 +73,7 @@ week 3% session 22% | gmail 7 | tasks 3 | jira 5 | github 4
 | tasks          | 1-5   | -      | 6-10   | 11+  | 0    |
 | jira           | 1-5   | -      | 6-10   | 11+  | 0    |
 | github         | 1-3   | -      | 4-7    | 8+   | 0    |
+| slack          | 1-9   | -      | 10-29  | 30+  | 0    |
 
 ---
 
@@ -83,11 +86,12 @@ week 3% session 22% | gmail 7 | tasks 3 | jira 5 | github 4
 
 외부 서비스 CLI는 **선택사항**입니다 — 필요한 것만 설치하세요:
 
-| 서비스        | CLI                                                           | 설치                                                                                 |
+| 서비스        | CLI / API                                                     | 설치                                                                                 |
 | ------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | Gmail / Tasks | [Google Workspace CLI](https://github.com/nicholasgasior/gws) | `npm install -g @nicholasgasior/gws`                                                 |
 | Jira          | [Atlassian CLI](https://developer.atlassian.com/cloud/acli/)  | [바이너리 다운로드](https://developer.atlassian.com/cloud/acli/guides/install-acli/) |
 | GitHub        | [GitHub CLI](https://cli.github.com)                          | `winget install GitHub.cli` / `brew install gh`                                      |
+| Slack         | [Slack API](https://api.slack.com/apps) (User OAuth Token)    | `/claude-code-status:slack-setup` 실행                                               |
 
 ---
 
@@ -152,6 +156,23 @@ gh auth login
 
 </details>
 
+<details>
+<summary><b>Slack</b></summary>
+
+Claude Code 대화창에서 설정 스킬을 실행합니다:
+
+```
+/claude-code-status:slack-setup
+```
+
+다음 과정을 안내합니다:
+1. Slack App 생성 및 User OAuth Token (`xoxp-...`) 발급
+2. 모니터링할 채널 선택
+
+필요한 User Token Scopes: `channels:read`, `groups:read`, `im:read`, `mpim:read`
+
+</details>
+
 ### Step 4. 동작 확인
 
 ```
@@ -173,6 +194,8 @@ gh auth login
 | `/claude-code-status:tasks-check`     | Google Tasks 상세 확인 / 강제 새로고침                                   |
 | `/claude-code-status:jira-check`      | Jira 이슈 상세 확인 / 강제 새로고침                                      |
 | `/claude-code-status:github-check`    | GitHub PR 알림 상세 확인 / 강제 새로고침                                 |
+| `/claude-code-status:slack-setup`     | Slack 연동 설정 — 토큰 등록 + 채널 선택                                  |
+| `/claude-code-status:slack-check`     | Slack 읽지 않은 메시지 상세 확인 / 강제 새로고침                          |
 | `/claude-code-status:toggle-service`  | 상태 표시줄에서 서비스 표시/숨김 (예: `gmail off`)                        |
 
 ---
@@ -192,16 +215,17 @@ gh auth login
 
 [백그라운드 collector]
   node collect.js --service <name>
-    -> 외부 CLI 호출 (gws / acli / gh)
+    -> 외부 CLI 호출 (gws / acli / gh) 또는 Slack API 직접 호출
     -> $CLAUDE_PLUGIN_DATA/cache/<service>.json에 저장
     -> lock 파일로 중복 실행 방지
 ```
 
 ### 캐시 TTL
 
-| 서비스                         | TTL |
-| ------------------------------ | --- |
-| gmail / tasks / jira / github  | 1분 |
+| 서비스                         | TTL  |
+| ------------------------------ | ---- |
+| gmail / tasks / jira / github  | 1분  |
+| slack                          | 2분  |
 
 ---
 
@@ -227,10 +251,10 @@ $CLAUDE_PLUGIN_DATA/
       render.js               <- 상태 표시줄 렌더러
       collect.js              <- collector CLI 디스패처
       collectors/
-        gmail.js, tasks.js, jira.js, github.js
+        gmail.js, tasks.js, jira.js, github.js, slack.js
       coordinator.js          <- lock / stale / 백그라운드 갱신
       cache.js                <- 캐시 읽기 헬퍼
-  config.json                 <- 서비스 표시 설정 (토글 on/off)
+  config.json                 <- 서비스 표시 설정 + Slack 토큰/채널
   cache/
     <service>.json            <- 각 서비스 캐시 데이터
   locks/

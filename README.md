@@ -4,7 +4,7 @@
 
 **A Claude Code plugin that brings your work dashboard into the terminal.**
 
-Claude usage, Gmail, Tasks, Jira, GitHub — all in one status line.
+Claude usage, Gmail, Tasks, Jira, GitHub, Slack — all in one status line.
 
 <p>
   <a href="#tutorial">Install</a> &middot;
@@ -29,7 +29,7 @@ Claude usage, Gmail, Tasks, Jira, GitHub — all in one status line.
 </div>
 
 ```
-week 3% session 22% | gmail 7 | tasks 3 | jira 5 | github 4
+week 3% session 22% | gmail 7 | tasks 3 | jira 5 | github 4 | slack 5
 ```
 
 ---
@@ -42,6 +42,7 @@ The default Claude Code status line shows almost nothing. You don't know:
 - **How many unread emails** are piling up while you're deep in a coding session
 - **How many Jira tickets** are waiting for you
 - **Whether a PR review** just came in on GitHub
+- **How many Slack messages** are waiting for you
 
 Context switching to check each service breaks your flow. This plugin puts everything in one line at the bottom of your terminal — always visible, never in the way.
 
@@ -59,6 +60,7 @@ Services you haven't connected are **automatically hidden**. You can also **togg
 | `tasks 3`     | Google Tasks API        | Incomplete to-dos                            |
 | `jira 5`      | Jira API                | Open issues assigned to you                  |
 | `github 4`    | GitHub API              | Unread PR notifications                      |
+| `slack 5`     | Slack API               | Unread DMs + monitored channel messages      |
 
 ### Color coding
 
@@ -71,6 +73,7 @@ Colors change based on urgency so you can scan at a glance:
 | tasks          | 1-5   | -      | 6-10   | 11+  | 0    |
 | jira           | 1-5   | -      | 6-10   | 11+  | 0    |
 | github         | 1-3   | -      | 4-7    | 8+   | 0    |
+| slack          | 1-9   | -      | 10-29  | 30+  | 0    |
 
 ---
 
@@ -83,11 +86,12 @@ Colors change based on urgency so you can scan at a glance:
 
 External service CLIs are **optional** — install only what you need:
 
-| Service       | CLI                                                           | Install                                                                            |
+| Service       | CLI / API                                                     | Install                                                                            |
 | ------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | Gmail / Tasks | [Google Workspace CLI](https://github.com/nicholasgasior/gws) | `npm install -g @nicholasgasior/gws`                                               |
 | Jira          | [Atlassian CLI](https://developer.atlassian.com/cloud/acli/)  | [Download binary](https://developer.atlassian.com/cloud/acli/guides/install-acli/) |
 | GitHub        | [GitHub CLI](https://cli.github.com)                          | `winget install GitHub.cli` / `brew install gh`                                    |
+| Slack         | [Slack API](https://api.slack.com/apps) (User OAuth Token)    | Run `/claude-code-status:slack-setup`                                              |
 
 ---
 
@@ -152,6 +156,23 @@ gh auth login
 
 </details>
 
+<details>
+<summary><b>Slack</b></summary>
+
+Run the setup skill inside a Claude Code conversation:
+
+```
+/claude-code-status:slack-setup
+```
+
+This will guide you through:
+1. Creating a Slack App and getting a User OAuth Token (`xoxp-...`)
+2. Selecting which channels to monitor
+
+Required User Token Scopes: `channels:read`, `groups:read`, `im:read`, `mpim:read`
+
+</details>
+
 ### Step 4. Verify everything works
 
 ```
@@ -173,6 +194,8 @@ Each failed check includes the exact command to fix it.
 | `/claude-code-status:tasks-check`     | Google Tasks details / force refresh                                   |
 | `/claude-code-status:jira-check`      | Jira issue details / force refresh                                     |
 | `/claude-code-status:github-check`    | GitHub PR notification details / force refresh                         |
+| `/claude-code-status:slack-setup`     | Slack integration setup — token + channel selection                    |
+| `/claude-code-status:slack-check`     | Slack unread details / force refresh                                   |
 | `/claude-code-status:toggle-service`  | Show/hide a service from the status line (e.g. `gmail off`)            |
 
 ---
@@ -192,16 +215,17 @@ Each failed check includes the exact command to fix it.
 
 [Background collectors]
   node collect.js --service <name>
-    -> calls external CLI (gws / acli / gh)
+    -> calls external CLI (gws / acli / gh) or Slack API directly
     -> writes $CLAUDE_PLUGIN_DATA/cache/<service>.json
     -> lock files prevent duplicate fetches
 ```
 
 ### Cache TTL
 
-| Service                        | TTL      |
-| ------------------------------ | -------- |
-| gmail / tasks / jira / github  | 1 minute |
+| Service                        | TTL       |
+| ------------------------------ | --------- |
+| gmail / tasks / jira / github  | 1 minute  |
+| slack                          | 2 minutes |
 
 ---
 
@@ -227,10 +251,10 @@ $CLAUDE_PLUGIN_DATA/
       render.js               <- Status line renderer
       collect.js              <- Collector CLI dispatcher
       collectors/
-        gmail.js, tasks.js, jira.js, github.js
+        gmail.js, tasks.js, jira.js, github.js, slack.js
       coordinator.js          <- Lock / stale / background refresh
       cache.js                <- Cache read helpers
-  config.json                 <- Service visibility settings (toggle on/off)
+  config.json                 <- Service visibility + Slack token/channels
   cache/
     <service>.json            <- Cached data per service
   locks/
