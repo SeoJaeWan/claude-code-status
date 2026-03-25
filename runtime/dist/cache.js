@@ -40,6 +40,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getPluginDataDir = getPluginDataDir;
 exports.getCacheDir = getCacheDir;
 exports.readCache = readCache;
 exports.isFresh = isFresh;
@@ -49,12 +50,20 @@ const path = __importStar(require("path"));
  * Returns the cache directory path.
  * Throws if CLAUDE_PLUGIN_DATA is not set.
  */
+/**
+ * Returns the plugin data root directory.
+ * Checks CLAUDE_PLUGIN_DATA env var first, then derives from __dirname
+ * (dist/ lives inside the plugin data runtime directory).
+ */
+function getPluginDataDir() {
+    const fromEnv = process.env['CLAUDE_PLUGIN_DATA'];
+    if (fromEnv)
+        return fromEnv;
+    // __dirname = <PLUGIN_DATA>/runtime/dist → go up 2 levels
+    return path.resolve(__dirname, '..', '..');
+}
 function getCacheDir() {
-    const pluginData = process.env['CLAUDE_PLUGIN_DATA'];
-    if (!pluginData) {
-        throw new Error('CLAUDE_PLUGIN_DATA environment variable is not set');
-    }
-    return path.join(pluginData, 'cache');
+    return path.join(getPluginDataDir(), 'cache');
 }
 /**
  * Reads a collector result from the cache.

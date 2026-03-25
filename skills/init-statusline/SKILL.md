@@ -53,9 +53,11 @@ The `statusLine` object must have:
 ```json
 {
   "type": "command",
-  "command": "<CLAUDE_PLUGIN_DATA>/bin/status-line.sh"
+  "command": "node <CLAUDE_PLUGIN_DATA>/runtime/dist/render.js"
 }
 ```
+
+Using `node render.js` directly avoids spawning a bash process, which prevents CMD window flashing on Windows.
 
 ### 3. Populate cache by running collectors
 

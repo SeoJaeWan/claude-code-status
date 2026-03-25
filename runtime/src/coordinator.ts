@@ -17,7 +17,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { spawn } from 'child_process';
-import { readCache, getCacheDir, isFresh } from './cache';
+import { readCache, getCacheDir, getPluginDataDir, isFresh } from './cache';
 import type { ServiceName } from './types';
 
 // ---------------------------------------------------------------------------
@@ -25,11 +25,7 @@ import type { ServiceName } from './types';
 // ---------------------------------------------------------------------------
 
 function getLockDir(): string {
-  const pluginData = process.env['CLAUDE_PLUGIN_DATA'];
-  if (!pluginData) {
-    throw new Error('CLAUDE_PLUGIN_DATA environment variable is not set');
-  }
-  return path.join(pluginData, 'locks');
+  return path.join(getPluginDataDir(), 'locks');
 }
 
 function getLockPath(service: ServiceName): string {
@@ -149,7 +145,7 @@ export function triggerRefreshIfStale(service: ServiceName): void {
       {
         detached: true,
         stdio: 'ignore',
-        env: { ...process.env },
+        env: { ...process.env, CLAUDE_PLUGIN_DATA: getPluginDataDir() },
         windowsHide: true,
       },
     );
@@ -179,7 +175,7 @@ export function triggerForceRefresh(service: ServiceName): void {
       {
         detached: true,
         stdio: 'ignore',
-        env: { ...process.env },
+        env: { ...process.env, CLAUDE_PLUGIN_DATA: getPluginDataDir() },
         windowsHide: true,
       },
     );
@@ -199,12 +195,7 @@ export function triggerForceRefresh(service: ServiceName): void {
  * Uses a temp-file + rename strategy to avoid partial reads.
  */
 export function writeCacheFile(service: string, data: unknown): void {
-  const pluginData = process.env['CLAUDE_PLUGIN_DATA'];
-  if (!pluginData) {
-    throw new Error('CLAUDE_PLUGIN_DATA environment variable is not set');
-  }
-
-  const cacheDir = path.join(pluginData, 'cache');
+  const cacheDir = path.join(getPluginDataDir(), 'cache');
   fs.mkdirSync(cacheDir, { recursive: true });
 
   const finalPath = path.join(cacheDir, `${service}.json`);

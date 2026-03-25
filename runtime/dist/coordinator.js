@@ -63,11 +63,7 @@ const cache_1 = require("./cache");
 // Paths
 // ---------------------------------------------------------------------------
 function getLockDir() {
-    const pluginData = process.env['CLAUDE_PLUGIN_DATA'];
-    if (!pluginData) {
-        throw new Error('CLAUDE_PLUGIN_DATA environment variable is not set');
-    }
-    return path.join(pluginData, 'locks');
+    return path.join((0, cache_1.getPluginDataDir)(), 'locks');
 }
 function getLockPath(service) {
     return path.join(getLockDir(), `${service}.lock`);
@@ -178,7 +174,7 @@ function triggerRefreshIfStale(service) {
         [collectScript, '--service', service], {
             detached: true,
             stdio: 'ignore',
-            env: { ...process.env },
+            env: { ...process.env, CLAUDE_PLUGIN_DATA: (0, cache_1.getPluginDataDir)() },
             windowsHide: true,
         });
         // Detach so the parent (render) process can exit without waiting
@@ -202,7 +198,7 @@ function triggerForceRefresh(service) {
         const child = (0, child_process_1.spawn)(process.execPath, [collectScript, '--service', service, '--force'], {
             detached: true,
             stdio: 'ignore',
-            env: { ...process.env },
+            env: { ...process.env, CLAUDE_PLUGIN_DATA: (0, cache_1.getPluginDataDir)() },
             windowsHide: true,
         });
         child.unref();
@@ -219,11 +215,7 @@ function triggerForceRefresh(service) {
  * Uses a temp-file + rename strategy to avoid partial reads.
  */
 function writeCacheFile(service, data) {
-    const pluginData = process.env['CLAUDE_PLUGIN_DATA'];
-    if (!pluginData) {
-        throw new Error('CLAUDE_PLUGIN_DATA environment variable is not set');
-    }
-    const cacheDir = path.join(pluginData, 'cache');
+    const cacheDir = path.join((0, cache_1.getPluginDataDir)(), 'cache');
     fs.mkdirSync(cacheDir, { recursive: true });
     const finalPath = path.join(cacheDir, `${service}.json`);
     const tmpPath = finalPath + '.tmp';
