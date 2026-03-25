@@ -23,11 +23,9 @@ Claude usage, Gmail, Tasks, Jira, GitHub — all in one status line.
 
 <p><a href="README.ko.md">한국어</a></p>
 
-</div>
-<div align="center">
 <img width="678" height="331" alt="image" src="https://github.com/user-attachments/assets/f5aac8b8-e59c-499b-a887-8b1101f98407" />
-</div>
 
+</div>
 
 ```
 week 3% session 22% | gmail 7 | tasks 3 | jira 5 | github 4
@@ -52,43 +50,43 @@ Services you haven't connected are **automatically hidden**. Start with just the
 
 ## What it shows
 
-| Segment | Source | What it tells you |
-|---|---|---|
-| `week 3%` | Claude Code rate limits | Weekly plan usage — pace yourself |
+| Segment       | Source                  | What it tells you                            |
+| ------------- | ----------------------- | -------------------------------------------- |
+| `week 3%`     | Claude Code rate limits | Weekly plan usage — pace yourself            |
 | `session 22%` | Claude Code rate limits | Current session usage — watch for compaction |
-| `gmail 7` | Gmail API | Unread emails accumulating |
-| `tasks 3` | Google Tasks API | Incomplete to-dos |
-| `jira 5` | Jira API | Open issues assigned to you |
-| `github 4` | GitHub API | Unread PR notifications |
+| `gmail 7`     | Gmail API               | Unread emails accumulating                   |
+| `tasks 3`     | Google Tasks API        | Incomplete to-dos                            |
+| `jira 5`      | Jira API                | Open issues assigned to you                  |
+| `github 4`    | GitHub API              | Unread PR notifications                      |
 
 ### Color coding
 
 Colors change based on urgency so you can scan at a glance:
 
-| Segment | Green | Cyan | Yellow | Red | Gray |
-|---|---|---|---|---|---|
-| week / session | 0-29% | 30-59% | 60-79% | 80%+ | - |
-| gmail | 1-9 | - | 10-29 | 30+ | 0 |
-| tasks | 1-5 | - | 6-10 | 11+ | 0 |
-| jira | 1-5 | - | 6-10 | 11+ | 0 |
-| github | 1-3 | - | 4-7 | 8+ | 0 |
+| Segment        | Green | Cyan   | Yellow | Red  | Gray |
+| -------------- | ----- | ------ | ------ | ---- | ---- |
+| week / session | 0-29% | 30-59% | 60-79% | 80%+ | -    |
+| gmail          | 1-9   | -      | 10-29  | 30+  | 0    |
+| tasks          | 1-5   | -      | 6-10   | 11+  | 0    |
+| jira           | 1-5   | -      | 6-10   | 11+  | 0    |
+| github         | 1-3   | -      | 4-7    | 8+   | 0    |
 
 ---
 
 ## Prerequisites
 
-| Requirement | Why |
-|---|---|
-| [Node.js](https://nodejs.org) v18+ | Runs the status line renderer and collectors |
-| [Claude Code](https://claude.ai/code) | The CLI this plugin extends |
+| Requirement                           | Why                                          |
+| ------------------------------------- | -------------------------------------------- |
+| [Node.js](https://nodejs.org) v18+    | Runs the status line renderer and collectors |
+| [Claude Code](https://claude.ai/code) | The CLI this plugin extends                  |
 
 External service CLIs are **optional** — install only what you need:
 
-| Service | CLI | Install |
-|---|---|---|
-| Gmail / Tasks | [Google Workspace CLI](https://github.com/nicholasgasior/gws) | `npm install -g @nicholasgasior/gws` |
-| Jira | [Atlassian CLI](https://developer.atlassian.com/cloud/acli/) | [Download binary](https://developer.atlassian.com/cloud/acli/guides/install-acli/) |
-| GitHub | [GitHub CLI](https://cli.github.com) | `winget install GitHub.cli` / `brew install gh` |
+| Service       | CLI                                                           | Install                                                                            |
+| ------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Gmail / Tasks | [Google Workspace CLI](https://github.com/nicholasgasior/gws) | `npm install -g @nicholasgasior/gws`                                               |
+| Jira          | [Atlassian CLI](https://developer.atlassian.com/cloud/acli/)  | [Download binary](https://developer.atlassian.com/cloud/acli/guides/install-acli/) |
+| GitHub        | [GitHub CLI](https://cli.github.com)                          | `winget install GitHub.cli` / `brew install gh`                                    |
 
 ---
 
@@ -97,7 +95,8 @@ External service CLIs are **optional** — install only what you need:
 ### Step 1. Install the plugin
 
 ```bash
-claude plugin install claude-code-status
+claude plugin marketplace add SeoJaeWan/claude-code-status
+claude plugin install claude-code-status@claude-code-status
 ```
 
 ### Step 2. Initialize everything
@@ -165,14 +164,14 @@ Each failed check includes the exact command to fix it.
 
 ## Available commands
 
-| Command | Description |
-|---|---|
+| Command                               | Description                                                            |
+| ------------------------------------- | ---------------------------------------------------------------------- |
 | `/claude-code-status:init-statusline` | **Full setup** — bootstrap, wire settings, populate cache (no restart) |
-| `/claude-code-status:status-doctor` | Full health check with fix suggestions |
-| `/claude-code-status:gmail-check` | Gmail details / force refresh |
-| `/claude-code-status:tasks-check` | Google Tasks details / force refresh |
-| `/claude-code-status:jira-check` | Jira issue details / force refresh |
-| `/claude-code-status:github-check` | GitHub PR notification details / force refresh |
+| `/claude-code-status:status-doctor`   | Full health check with fix suggestions                                 |
+| `/claude-code-status:gmail-check`     | Gmail details / force refresh                                          |
+| `/claude-code-status:tasks-check`     | Google Tasks details / force refresh                                   |
+| `/claude-code-status:jira-check`      | Jira issue details / force refresh                                     |
+| `/claude-code-status:github-check`    | GitHub PR notification details / force refresh                         |
 
 ---
 
@@ -198,21 +197,21 @@ Each failed check includes the exact command to fix it.
 
 ### Cache TTL
 
-| Service | TTL |
-|---|---|
-| github | 90 seconds |
-| gmail / tasks / jira | 5 minutes |
+| Service              | TTL        |
+| -------------------- | ---------- |
+| github               | 90 seconds |
+| gmail / tasks / jira | 5 minutes  |
 
 ---
 
 ## Troubleshooting
 
-| Problem | Solution |
-|---|---|
-| Status line not showing | Run `/claude-code-status:init-statusline` |
-| Service shows `!` (red) | Auth expired — re-run the auth command from Step 3 |
+| Problem                 | Solution                                            |
+| ----------------------- | --------------------------------------------------- |
+| Status line not showing | Run `/claude-code-status:init-statusline`           |
+| Service shows `!` (red) | Auth expired — re-run the auth command from Step 3  |
 | `status: build missing` | Restart Claude Code (SessionStart hook syncs dist/) |
-| Want to force-refresh | Use `/claude-code-status:<service>-check` |
+| Want to force-refresh   | Use `/claude-code-status:<service>-check`           |
 
 ---
 

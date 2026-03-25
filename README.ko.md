@@ -23,6 +23,8 @@ Claude 사용량, Gmail, Tasks, Jira, GitHub — 한 줄로 모두 확인.
 
 <p><a href="README.md">English</a></p>
 
+<img width="678" height="331" alt="image" src="https://github.com/user-attachments/assets/f5aac8b8-e59c-499b-a887-8b1101f98407" />
+
 </div>
 
 ```
@@ -48,43 +50,43 @@ week 3% session 22% | gmail 7 | tasks 3 | jira 5 | github 4
 
 ## 표시 항목
 
-| 구간 | 소스 | 의미 |
-|---|---|---|
-| `week 3%` | Claude Code 요금 한도 | 주간 사용률 — 페이스 조절 |
+| 구간          | 소스                  | 의미                           |
+| ------------- | --------------------- | ------------------------------ |
+| `week 3%`     | Claude Code 요금 한도 | 주간 사용률 — 페이스 조절      |
 | `session 22%` | Claude Code 요금 한도 | 현재 세션 사용률 — 컴팩션 주의 |
-| `gmail 7` | Gmail API | 쌓이고 있는 읽지 않은 메일 |
-| `tasks 3` | Google Tasks API | 미완료 할 일 |
-| `jira 5` | Jira API | 본인에게 할당된 미완료 이슈 |
-| `github 4` | GitHub API | 읽지 않은 PR 알림 |
+| `gmail 7`     | Gmail API             | 쌓이고 있는 읽지 않은 메일     |
+| `tasks 3`     | Google Tasks API      | 미완료 할 일                   |
+| `jira 5`      | Jira API              | 본인에게 할당된 미완료 이슈    |
+| `github 4`    | GitHub API            | 읽지 않은 PR 알림              |
 
 ### 색상 규칙
 
 긴급도에 따라 색상이 바뀌어 한눈에 파악할 수 있습니다:
 
-| 구간 | Green | Cyan | Yellow | Red | Gray |
-|---|---|---|---|---|---|
-| week / session | 0-29% | 30-59% | 60-79% | 80%+ | - |
-| gmail | 1-9 | - | 10-29 | 30+ | 0 |
-| tasks | 1-5 | - | 6-10 | 11+ | 0 |
-| jira | 1-5 | - | 6-10 | 11+ | 0 |
-| github | 1-3 | - | 4-7 | 8+ | 0 |
+| 구간           | Green | Cyan   | Yellow | Red  | Gray |
+| -------------- | ----- | ------ | ------ | ---- | ---- |
+| week / session | 0-29% | 30-59% | 60-79% | 80%+ | -    |
+| gmail          | 1-9   | -      | 10-29  | 30+  | 0    |
+| tasks          | 1-5   | -      | 6-10   | 11+  | 0    |
+| jira           | 1-5   | -      | 6-10   | 11+  | 0    |
+| github         | 1-3   | -      | 4-7    | 8+   | 0    |
 
 ---
 
 ## 사전 요구사항
 
-| 항목 | 이유 |
-|---|---|
-| [Node.js](https://nodejs.org) v18+ | 상태 표시줄 렌더러 및 collector 실행 |
-| [Claude Code](https://claude.ai/code) | 이 플러그인이 확장하는 CLI |
+| 항목                                  | 이유                                 |
+| ------------------------------------- | ------------------------------------ |
+| [Node.js](https://nodejs.org) v18+    | 상태 표시줄 렌더러 및 collector 실행 |
+| [Claude Code](https://claude.ai/code) | 이 플러그인이 확장하는 CLI           |
 
 외부 서비스 CLI는 **선택사항**입니다 — 필요한 것만 설치하세요:
 
-| 서비스 | CLI | 설치 |
-|---|---|---|
-| Gmail / Tasks | [Google Workspace CLI](https://github.com/nicholasgasior/gws) | `npm install -g @nicholasgasior/gws` |
-| Jira | [Atlassian CLI](https://developer.atlassian.com/cloud/acli/) | [바이너리 다운로드](https://developer.atlassian.com/cloud/acli/guides/install-acli/) |
-| GitHub | [GitHub CLI](https://cli.github.com) | `winget install GitHub.cli` / `brew install gh` |
+| 서비스        | CLI                                                           | 설치                                                                                 |
+| ------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Gmail / Tasks | [Google Workspace CLI](https://github.com/nicholasgasior/gws) | `npm install -g @nicholasgasior/gws`                                                 |
+| Jira          | [Atlassian CLI](https://developer.atlassian.com/cloud/acli/)  | [바이너리 다운로드](https://developer.atlassian.com/cloud/acli/guides/install-acli/) |
+| GitHub        | [GitHub CLI](https://cli.github.com)                          | `winget install GitHub.cli` / `brew install gh`                                      |
 
 ---
 
@@ -93,7 +95,8 @@ week 3% session 22% | gmail 7 | tasks 3 | jira 5 | github 4
 ### Step 1. 플러그인 설치
 
 ```bash
-claude plugin install claude-code-status
+claude plugin marketplace add SeoJaeWan/claude-code-status
+claude plugin install claude-code-status@claude-code-status
 ```
 
 ### Step 2. 초기화
@@ -161,14 +164,14 @@ gh auth login
 
 ## 사용 가능한 명령어
 
-| 명령어 | 설명 |
-|---|---|
+| 명령어                                | 설명                                                                     |
+| ------------------------------------- | ------------------------------------------------------------------------ |
 | `/claude-code-status:init-statusline` | **전체 초기화** — 부트스트랩, settings 연결, 캐시 채우기 (재시작 불필요) |
-| `/claude-code-status:status-doctor` | 전체 상태 점검 및 수정 가이드 |
-| `/claude-code-status:gmail-check` | Gmail 상세 확인 / 강제 새로고침 |
-| `/claude-code-status:tasks-check` | Google Tasks 상세 확인 / 강제 새로고침 |
-| `/claude-code-status:jira-check` | Jira 이슈 상세 확인 / 강제 새로고침 |
-| `/claude-code-status:github-check` | GitHub PR 알림 상세 확인 / 강제 새로고침 |
+| `/claude-code-status:status-doctor`   | 전체 상태 점검 및 수정 가이드                                            |
+| `/claude-code-status:gmail-check`     | Gmail 상세 확인 / 강제 새로고침                                          |
+| `/claude-code-status:tasks-check`     | Google Tasks 상세 확인 / 강제 새로고침                                   |
+| `/claude-code-status:jira-check`      | Jira 이슈 상세 확인 / 강제 새로고침                                      |
+| `/claude-code-status:github-check`    | GitHub PR 알림 상세 확인 / 강제 새로고침                                 |
 
 ---
 
@@ -194,21 +197,21 @@ gh auth login
 
 ### 캐시 TTL
 
-| 서비스 | TTL |
-|---|---|
-| github | 90초 |
-| gmail / tasks / jira | 5분 |
+| 서비스               | TTL  |
+| -------------------- | ---- |
+| github               | 90초 |
+| gmail / tasks / jira | 5분  |
 
 ---
 
 ## 트러블슈팅
 
-| 문제 | 해결 |
-|---|---|
-| 상태 표시줄이 안 보여요 | `/claude-code-status:init-statusline` 실행 |
-| 서비스에 `!` (빨강) 표시 | 인증 만료 — Step 3의 인증 명령어 재실행 |
+| 문제                         | 해결                                                |
+| ---------------------------- | --------------------------------------------------- |
+| 상태 표시줄이 안 보여요      | `/claude-code-status:init-statusline` 실행          |
+| 서비스에 `!` (빨강) 표시     | 인증 만료 — Step 3의 인증 명령어 재실행             |
 | `status: build missing` 표시 | Claude Code 재시작 (SessionStart 훅이 dist/ 동기화) |
-| 강제 새로고침 하고 싶어요 | `/claude-code-status:<service>-check` 사용 |
+| 강제 새로고침 하고 싶어요    | `/claude-code-status:<service>-check` 사용          |
 
 ---
 
