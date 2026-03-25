@@ -11,14 +11,14 @@
  *  - Checks login status before fetching.
  *  - Writes result to ${CLAUDE_PLUGIN_DATA}/cache/jira.json.
  *
- * TTL: 5 minutes.
+ * TTL: 1 minute.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.collect = collect;
 const child_process_1 = require("child_process");
 const coordinator_1 = require("../coordinator");
 const SERVICE = 'jira';
-const TTL_MS = 5 * 60000; // 5 minutes
+const TTL_MS = 60000; // 1 minute
 const JQL = 'assignee = currentUser() AND statusCategory != Done';
 // ---------------------------------------------------------------------------
 // Error classification

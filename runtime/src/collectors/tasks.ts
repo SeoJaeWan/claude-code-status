@@ -10,7 +10,7 @@
  *  - Counts only tasks with status === 'needsAction'.
  *  - Writes result to ${CLAUDE_PLUGIN_DATA}/cache/tasks.json.
  *
- * TTL: 5 minutes.
+ * TTL: 1 minute.
  */
 
 import { exec } from 'child_process';
@@ -18,7 +18,7 @@ import type { CollectorResult, ErrorKind } from '../types';
 import { writeCacheFile } from '../coordinator';
 
 const SERVICE = 'tasks';
-const TTL_MS = 5 * 60_000; // 5 minutes
+const TTL_MS = 60_000; // 1 minute
 
 // ---------------------------------------------------------------------------
 // Types for Google Tasks API responses

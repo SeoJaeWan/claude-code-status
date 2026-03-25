@@ -10,7 +10,7 @@
  *  - Respects X-Poll-Interval header stored in the cache metadata.
  *  - Writes result to ${CLAUDE_PLUGIN_DATA}/cache/github.json.
  *
- * TTL: 90 seconds (1.5 min, within the 1–2 min spec).
+ * TTL: 1 minute.
  */
 export declare function collect(): Promise<void>;
 //# sourceMappingURL=github.d.ts.map

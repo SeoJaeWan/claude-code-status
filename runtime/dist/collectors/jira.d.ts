@@ -10,7 +10,7 @@
  *  - Checks login status before fetching.
  *  - Writes result to ${CLAUDE_PLUGIN_DATA}/cache/jira.json.
  *
- * TTL: 5 minutes.
+ * TTL: 1 minute.
  */
 export declare function collect(): Promise<void>;
 //# sourceMappingURL=jira.d.ts.map

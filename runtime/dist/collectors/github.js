@@ -11,14 +11,14 @@
  *  - Respects X-Poll-Interval header stored in the cache metadata.
  *  - Writes result to ${CLAUDE_PLUGIN_DATA}/cache/github.json.
  *
- * TTL: 90 seconds (1.5 min, within the 1–2 min spec).
+ * TTL: 1 minute.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.collect = collect;
 const child_process_1 = require("child_process");
 const coordinator_1 = require("../coordinator");
 const SERVICE = 'github';
-const TTL_MS = 90000; // 90 seconds
+const TTL_MS = 60000; // 1 minute
 // ---------------------------------------------------------------------------
 // Error classification
 // ---------------------------------------------------------------------------

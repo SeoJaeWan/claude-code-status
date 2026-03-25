@@ -10,7 +10,7 @@
  *  - Respects X-Poll-Interval header stored in the cache metadata.
  *  - Writes result to ${CLAUDE_PLUGIN_DATA}/cache/github.json.
  *
- * TTL: 90 seconds (1.5 min, within the 1–2 min spec).
+ * TTL: 1 minute.
  */
 
 import { execSync } from 'child_process';
@@ -18,7 +18,7 @@ import type { CollectorResult, ErrorKind } from '../types';
 import { writeCacheFile } from '../coordinator';
 
 const SERVICE = 'github';
-const TTL_MS = 90_000; // 90 seconds
+const TTL_MS = 60_000; // 1 minute
 
 // ---------------------------------------------------------------------------
 // Types for the GitHub Notifications API response

@@ -9,7 +9,7 @@
  *  - The `messagesUnread` field gives the total unread message count.
  *  - Writes result to ${CLAUDE_PLUGIN_DATA}/cache/gmail.json.
  *
- * TTL: 5 minutes.
+ * TTL: 1 minute.
  */
 
 import { exec } from 'child_process';
@@ -17,7 +17,7 @@ import type { CollectorResult, ErrorKind } from '../types';
 import { writeCacheFile } from '../coordinator';
 
 const SERVICE = 'gmail';
-const TTL_MS = 5 * 60_000; // 5 minutes
+const TTL_MS = 60_000; // 1 minute
 
 // ---------------------------------------------------------------------------
 // Types for Gmail API response

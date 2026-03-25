@@ -10,7 +10,7 @@
  *  - Checks login status before fetching.
  *  - Writes result to ${CLAUDE_PLUGIN_DATA}/cache/jira.json.
  *
- * TTL: 5 minutes.
+ * TTL: 1 minute.
  */
 
 import { execSync } from 'child_process';
@@ -18,7 +18,7 @@ import type { CollectorResult, ErrorKind } from '../types';
 import { writeCacheFile } from '../coordinator';
 
 const SERVICE = 'jira';
-const TTL_MS = 5 * 60_000; // 5 minutes
+const TTL_MS = 60_000; // 1 minute
 
 const JQL = 'assignee = currentUser() AND statusCategory != Done';
 

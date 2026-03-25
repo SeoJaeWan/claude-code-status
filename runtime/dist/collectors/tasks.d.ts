@@ -10,7 +10,7 @@
  *  - Counts only tasks with status === 'needsAction'.
  *  - Writes result to ${CLAUDE_PLUGIN_DATA}/cache/tasks.json.
  *
- * TTL: 5 minutes.
+ * TTL: 1 minute.
  */
 export declare function collect(): Promise<void>;
 //# sourceMappingURL=tasks.d.ts.map

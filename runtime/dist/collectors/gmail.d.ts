@@ -9,7 +9,7 @@
  *  - The `messagesUnread` field gives the total unread message count.
  *  - Writes result to ${CLAUDE_PLUGIN_DATA}/cache/gmail.json.
  *
- * TTL: 5 minutes.
+ * TTL: 1 minute.
  */
 export declare function collect(): Promise<void>;
 //# sourceMappingURL=gmail.d.ts.map
