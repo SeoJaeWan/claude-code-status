@@ -23,7 +23,8 @@ Claude usage, Gmail, Tasks, Jira, GitHub — all in one status line.
 
 <p><a href="README.ko.md">한국어</a></p>
 
-<img width="678" height="331" alt="image" src="https://github.com/user-attachments/assets/f5aac8b8-e59c-499b-a887-8b1101f98407" />
+<img width="874" height="285" alt="image" src="https://github.com/user-attachments/assets/bb017850-975e-4882-b9b4-23ce9c657f9f" />
+
 
 </div>
 
