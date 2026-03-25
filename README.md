@@ -164,7 +164,6 @@ Each failed check includes the exact command to fix it.
 | Command | Description |
 |---|---|
 | `/claude-code-status:init-statusline` | **Full setup** — bootstrap, wire settings, populate cache (no restart) |
-| `/claude-code-status:install-status` | Wire the status line into `settings.json` only |
 | `/claude-code-status:status-doctor` | Full health check with fix suggestions |
 | `/claude-code-status:gmail-check` | Gmail details / force refresh |
 | `/claude-code-status:tasks-check` | Google Tasks details / force refresh |
@@ -206,7 +205,7 @@ Each failed check includes the exact command to fix it.
 
 | Problem | Solution |
 |---|---|
-| Status line not showing | Run `/claude-code-status:install-status`, restart Claude Code |
+| Status line not showing | Run `/claude-code-status:init-statusline` |
 | Service shows `!` (red) | Auth expired — re-run the auth command from Step 3 |
 | `status: build missing` | Restart Claude Code (SessionStart hook syncs dist/) |
 | Want to force-refresh | Use `/claude-code-status:<service>-check` |

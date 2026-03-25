@@ -112,7 +112,7 @@ After marketplace install, the plugin directory is placed at:
 
 Users then run:
 ```
-/claude-status:install-status
+/claude-status:init-statusline
 ```
 
 to patch `~/.claude/settings.json` with the `statusLine.command`.
@@ -122,7 +122,7 @@ to patch `~/.claude/settings.json` with the `statusLine.command`.
 1. Clone or extract the plugin to a local directory.
 2. Run `cd runtime && npm run build` to compile TypeScript.
 3. In Claude Code: `claude --plugin-dir "C:\path\to\claude-status"`.
-4. Run `/claude-status:install-status`.
+4. Run `/claude-status:init-statusline`.
 5. Restart Claude Code.
 
 ---

@@ -99,7 +99,7 @@ $CLAUDE_PLUGIN_DATA/bin/status-line.sh
 ```
 
 - PASS: file exists
-- FAIL: run `/claude-code-status:install-status` or restart Claude Code to trigger the SessionStart hook
+- FAIL: run `/claude-code-status:init-statusline` or restart Claude Code to trigger the SessionStart hook
 
 ### 8. Check runtime dist
 
@@ -115,7 +115,7 @@ $CLAUDE_PLUGIN_DATA/runtime/dist/render.js
 Read `~/.claude/settings.json` and confirm `statusLine.command` equals the expected launcher path.
 
 - PASS: value matches `$CLAUDE_PLUGIN_DATA/bin/status-line.sh`
-- FAIL: not set or points elsewhere → run `/claude-code-status:install-status`
+- FAIL: not set or points elsewhere → run `/claude-code-status:init-statusline`
 
 ### 10. Check cache freshness for each service
 
@@ -204,7 +204,7 @@ gws               NOT FOUND   FAIL  -> npm install -g @googleworkspace/cli
 gws-auth          -           SKIP  (gws not installed)
 launcher          found       OK
 runtime dist      found       OK
-settings.json     not set     FAIL  -> Run /claude-code-status:install-status
+settings.json     not set     FAIL  -> Run /claude-code-status:init-statusline
 
 Cache freshness:
   gmail    ERROR  (dependency: gws CLI not found)

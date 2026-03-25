@@ -164,7 +164,6 @@ gh auth login
 | 명령어 | 설명 |
 |---|---|
 | `/claude-code-status:init-statusline` | **전체 초기화** — 부트스트랩, settings 연결, 캐시 채우기 (재시작 불필요) |
-| `/claude-code-status:install-status` | `settings.json`에 상태 표시줄만 연결 |
 | `/claude-code-status:status-doctor` | 전체 상태 점검 및 수정 가이드 |
 | `/claude-code-status:gmail-check` | Gmail 상세 확인 / 강제 새로고침 |
 | `/claude-code-status:tasks-check` | Google Tasks 상세 확인 / 강제 새로고침 |
@@ -206,7 +205,7 @@ gh auth login
 
 | 문제 | 해결 |
 |---|---|
-| 상태 표시줄이 안 보여요 | `/claude-code-status:install-status` 실행 후 Claude Code 재시작 |
+| 상태 표시줄이 안 보여요 | `/claude-code-status:init-statusline` 실행 |
 | 서비스에 `!` (빨강) 표시 | 인증 만료 — Step 3의 인증 명령어 재실행 |
 | `status: build missing` 표시 | Claude Code 재시작 (SessionStart 훅이 dist/ 동기화) |
 | 강제 새로고침 하고 싶어요 | `/claude-code-status:<service>-check` 사용 |

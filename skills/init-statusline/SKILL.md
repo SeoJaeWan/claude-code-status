@@ -102,5 +102,5 @@ Print a summary:
 ## Notes
 
 - This skill is idempotent — safe to run multiple times.
-- It replaces both `install-status` and the SessionStart hook for first-time setup.
+- It replaces the SessionStart hook for first-time setup.
 - After running this skill, the status line works immediately without restarting Claude Code.

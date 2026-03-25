@@ -20,12 +20,12 @@ Verify: Claude Code starts without errors and the plugin directory is recognised
 
 ---
 
-## Step 2 — Run install-status skill
+## Step 2 — Run init-statusline skill
 
 Inside Claude Code:
 
 ```
-/claude-status:install-status
+/claude-status:init-statusline
 ```
 
 Expected outcome:
@@ -168,7 +168,7 @@ Expected stdout: `status: render error` (the fallback line — never blank).
 ## Completion Checklist
 
 - [ ] Plugin loads without errors
-- [ ] `install-status` patches settings correctly
+- [ ] `init-statusline` patches settings correctly
 - [ ] Status bar shows week/session percentages
 - [ ] Doctor reports all checks
 - [ ] Each service shows correct data or a meaningful error indicator

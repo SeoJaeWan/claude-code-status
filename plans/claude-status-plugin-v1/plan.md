@@ -23,15 +23,15 @@
 - 작업:
     - `.claude-plugin/plugin.json`, `skills/`, `hooks/`, `scripts/`, `runtime/` 중심의 plugin 디렉터리 구조를 설계한다.
     - `SessionStart` hook으로 `${CLAUDE_PLUGIN_DATA}`의 의존성/런처 bootstrap과 버전 변경 감지를 구현한다.
-    - `/plugin-id:install-status` skill을 만들어 `~/.claude/settings.json`의 `statusLine.command`를 안정 경로 launcher로 설정한다.
+    - `/plugin-id:init-statusline` skill을 만들어 `~/.claude/settings.json`의 `statusLine.command`를 안정 경로 launcher로 설정한다.
     - `/plugin-id:doctor` skill 초안을 만들어 `node`, `gh`, `acli`, Google OAuth 설정 파일 존재 여부를 점검하게 한다.
     - PowerShell statusline launcher와 Node runtime entrypoint 사이의 호출 계약을 문서화한다.
 - 실행:
     - `claude plugin install <plugin> --scope user`
-    - `/plugin-id:install-status`
+    - `/plugin-id:init-statusline`
     - `/plugin-id:doctor`
 - 완료조건:
-    - plugin이 user scope로 설치되고, `install-status` 실행 후 전역 status line이 persistent launcher를 가리킨다.
+    - plugin이 user scope로 설치되고, `init-statusline` 실행 후 전역 status line이 persistent launcher를 가리킨다.
     - plugin update 이후에도 `${CLAUDE_PLUGIN_DATA}` 기반 launcher와 런타임 의존성이 유지되는 구조가 확인된다.
     - `doctor`가 필수 외부 의존성과 누락된 설정을 명확히 구분해 출력한다.
 - 폴백:
