@@ -56,8 +56,8 @@ if (-not $pluginData) {
     $pluginData = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 }
 
-$renderScript = Join-Path $pluginData 'runtime' 'dist' 'render.js'
-$logFile      = Join-Path $pluginData 'logs' 'launcher.log'
+$renderScript = Join-Path (Join-Path (Join-Path $pluginData 'runtime') 'dist') 'render.js'
+$logFile      = Join-Path (Join-Path $pluginData 'logs') 'launcher.log'
 
 function Write-Log {
     param([string]$Message)
