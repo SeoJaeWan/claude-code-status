@@ -18,7 +18,42 @@
  *   0  - always (even on error — fallback text is written to stdout so Claude
  *         Code does not display a blank status line)
  */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
+const fs = __importStar(require("fs"));
+const path = __importStar(require("path"));
 const cache_1 = require("./cache");
 const coordinator_1 = require("./coordinator");
 const config_1 = require("./config");
@@ -136,9 +171,46 @@ function parseStdinInput(raw) {
 // ---------------------------------------------------------------------------
 // week / session — read from stdin, rendered with color
 // ---------------------------------------------------------------------------
+const RATE_LIMITS_CACHE = 'rate_limits.json';
+function getRateLimitsCachePath() {
+    return path.join((0, cache_1.getCacheDir)(), RATE_LIMITS_CACHE);
+}
+/** Persist rate_limits to cache so subsequent sessions can show last-known values. */
+function saveRateLimits(rateLimits) {
+    try {
+        const cacheDir = (0, cache_1.getCacheDir)();
+        fs.mkdirSync(cacheDir, { recursive: true });
+        const data = { rateLimits, savedAt: new Date().toISOString() };
+        const tmpPath = getRateLimitsCachePath() + '.tmp';
+        fs.writeFileSync(tmpPath, JSON.stringify(data), 'utf8');
+        fs.renameSync(tmpPath, getRateLimitsCachePath());
+    }
+    catch {
+        // never block render
+    }
+}
+/** Load last-known rate_limits from cache. */
+function loadCachedRateLimits() {
+    try {
+        const raw = fs.readFileSync(getRateLimitsCachePath(), 'utf8');
+        const parsed = JSON.parse(raw);
+        return parsed.rateLimits ?? null;
+    }
+    catch {
+        return null;
+    }
+}
 function renderWeekSession(input) {
-    const weekPct = input.rate_limits?.seven_day?.used_percentage;
-    const sessionPct = input.rate_limits?.five_hour?.used_percentage;
+    let rateLimits = input.rate_limits;
+    // Save fresh data when available; fallback to cached when not
+    if (rateLimits) {
+        saveRateLimits(rateLimits);
+    }
+    else {
+        rateLimits = loadCachedRateLimits() ?? undefined;
+    }
+    const weekPct = rateLimits?.seven_day?.used_percentage;
+    const sessionPct = rateLimits?.five_hour?.used_percentage;
     let weekStr = null;
     let sessionStr = null;
     if (weekPct != null) {

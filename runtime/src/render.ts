@@ -18,11 +18,14 @@
  *         Code does not display a blank status line)
  */
 
-import { readCache, isFresh } from './cache';
+import * as fs from 'fs';
+import * as path from 'path';
+import { readCache, isFresh, getCacheDir } from './cache';
 import { triggerRefreshIfStale } from './coordinator';
 import { isServiceEnabled } from './config';
 import type {
   StatusLineInput,
+  RateLimits,
   ServiceName,
   CollectorResult,
 } from './types';
@@ -141,9 +144,49 @@ function parseStdinInput(raw: string): StatusLineInput {
 // week / session — read from stdin, rendered with color
 // ---------------------------------------------------------------------------
 
+const RATE_LIMITS_CACHE = 'rate_limits.json';
+
+function getRateLimitsCachePath(): string {
+  return path.join(getCacheDir(), RATE_LIMITS_CACHE);
+}
+
+/** Persist rate_limits to cache so subsequent sessions can show last-known values. */
+function saveRateLimits(rateLimits: RateLimits): void {
+  try {
+    const cacheDir = getCacheDir();
+    fs.mkdirSync(cacheDir, { recursive: true });
+    const data = { rateLimits, savedAt: new Date().toISOString() };
+    const tmpPath = getRateLimitsCachePath() + '.tmp';
+    fs.writeFileSync(tmpPath, JSON.stringify(data), 'utf8');
+    fs.renameSync(tmpPath, getRateLimitsCachePath());
+  } catch {
+    // never block render
+  }
+}
+
+/** Load last-known rate_limits from cache. */
+function loadCachedRateLimits(): RateLimits | null {
+  try {
+    const raw = fs.readFileSync(getRateLimitsCachePath(), 'utf8');
+    const parsed = JSON.parse(raw) as { rateLimits?: RateLimits };
+    return parsed.rateLimits ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function renderWeekSession(input: StatusLineInput): string {
-  const weekPct    = input.rate_limits?.seven_day?.used_percentage;
-  const sessionPct = input.rate_limits?.five_hour?.used_percentage;
+  let rateLimits = input.rate_limits;
+
+  // Save fresh data when available; fallback to cached when not
+  if (rateLimits) {
+    saveRateLimits(rateLimits);
+  } else {
+    rateLimits = loadCachedRateLimits() ?? undefined;
+  }
+
+  const weekPct    = rateLimits?.seven_day?.used_percentage;
+  const sessionPct = rateLimits?.five_hour?.used_percentage;
 
   let weekStr: string | null    = null;
   let sessionStr: string | null = null;

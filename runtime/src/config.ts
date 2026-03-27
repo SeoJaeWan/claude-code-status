@@ -25,6 +25,7 @@ export interface ServiceVisibility {
 
 export interface PluginConfig {
   services?: ServiceVisibility;
+  refreshIntervalSec?: number;
 }
 
 type ExternalService = keyof ServiceVisibility;

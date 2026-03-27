@@ -150,3 +150,16 @@ fi
 # ---------------------------------------------------------------------------
 echo "$PLUGIN_VERSION" > "$VERSION_FILE"
 log "Bootstrap complete. version=$PLUGIN_VERSION"
+
+# ---------------------------------------------------------------------------
+# 7. Spawn background cache watcher (if not already running)
+# ---------------------------------------------------------------------------
+WATCHER_SCRIPT="$RUNTIME_DIR/dist/watcher.js"
+
+if [[ -f "$WATCHER_SCRIPT" ]] && command -v node &>/dev/null; then
+  log "Spawning background cache watcher"
+  CLAUDE_PLUGIN_DATA="$PLUGIN_DATA" nohup node "$WATCHER_SCRIPT" \
+    >> "$LOG_DIR/watcher.log" 2>&1 &
+  disown
+  log "Watcher spawned (shell PID $!)"
+fi
