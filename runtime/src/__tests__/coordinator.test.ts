@@ -283,4 +283,24 @@ describe('expired lock cleanup', () => {
     // Should be able to acquire again
     expect(acquireLock('github')).toBe(true);
   });
+
+  it('acquireLock succeeds when existing lock is stale (bypasses isLocked)', () => {
+    acquireLock('github');
+    const lockPath = path.join(tmpDir, 'locks', 'github.lock');
+    const past = new Date(Date.now() - 120_000);
+    fs.utimesSync(lockPath, past, past);
+
+    // acquireLock should detect stale lock internally and succeed
+    expect(acquireLock('github')).toBe(true);
+
+    // New lock should contain current process PID
+    const content = fs.readFileSync(lockPath, 'utf8');
+    expect(content).toBe(String(process.pid));
+  });
+
+  it('acquireLock fails when existing lock is fresh (not stale)', () => {
+    acquireLock('github');
+    // Lock was just created — should not be overridable
+    expect(acquireLock('github')).toBe(false);
+  });
 });

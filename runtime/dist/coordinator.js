@@ -122,6 +122,20 @@ function acquireLock(service) {
         return true;
     }
     catch {
+        // Lock file exists — check if it's stale
+        try {
+            const stat = fs.statSync(lockPath);
+            const ageMs = Date.now() - stat.mtimeMs;
+            if (ageMs > LOCK_MAX_AGE_MS) {
+                // Stale lock — remove and retry
+                fs.unlinkSync(lockPath);
+                fs.writeFileSync(lockPath, String(process.pid), { flag: 'wx' });
+                return true;
+            }
+        }
+        catch {
+            // stat/unlink/write failed — another process may have raced us
+        }
         return false;
     }
 }
